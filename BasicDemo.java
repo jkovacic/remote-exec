@@ -98,7 +98,7 @@ public class BasicDemo
 			String whname = "winhost";
 			String wuname = "myusername";
 			
-			// Base64 format of the eWindows host key 
+			// Base64 format of the Windows host key 
 			char[] winHostkeyB64 = ( 
 					"AAAAB3NzaC1kc3MAAACBAP0tzw9S0Ep+DZPByGYwFgSQc9jbJ2nd5ra4Bpf/rtrj1pOEuR1K" +
 					"Sywoo1egiusjQCk2nlSFd7+MxTPlxigReTonuF6KV1GBsuRq/KK/MUXIXYK6cCi1fZ6BrPkj" +
