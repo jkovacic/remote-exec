@@ -148,7 +148,7 @@ public class BasicDemo
 			Hostkey winHostkey = new Hostkey(PKAlgs.DSA, winPubkey, Hostkey.HostkeyType.FULL_KEY);
 			winHost.insertHostkey(winHostkey);
 			
-			// User identification (public key authentication will be perforemed):
+			// User identification (public key authentication will be performed):
 			UserCredentialsPrivateKey winuser = new UserCredentialsPrivateKey();
 			winuser.setUsername(wuname);
 			winuser.setMethod(PKAlgs.RSA);
