@@ -1,0 +1,25 @@
+A Java library for local or remote execution of commands.
+
+At the moment the following methods for remote execution are supported:
+- rsh
+- rexec
+- SSH2
+
+The library relies on several 3rd party libraries. For rsh and rexec,
+Apache Commons Net is required. It is available at:
+http://commons.apache.org/net/
+
+For SSH, either Ganymed SSH2 or JSch is required. They are available at
+http://www.cleondris.ch/opensource/ssh2/
+and
+http://www.jcraft.com/jsch/
+respectively.
+
+For a brief introduction of the library, see BasicDemo.java. Additionally, 
+Javadoc documentation about the API can be generated.
+
+The library is licenced under the Apache 2.0 license. See LICENSE.txt and
+http://www.apache.org/licenses/LICENSE-2.0
+for more details.
+
+The author of the library is Jernej Kovacic (jkovacic AT gmail DOT com).
