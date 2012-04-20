@@ -239,7 +239,7 @@ public class ByteHex
 		
 		if ( null==bytes )
 		{
-			System.err.println("Conversin to bytes failed");
+			System.err.println("Conversion to bytes failed");
 		}
 		else
 		{
