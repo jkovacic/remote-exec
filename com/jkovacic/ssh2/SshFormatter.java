@@ -37,7 +37,7 @@ import java.util.*;
  * - when all desired vectors have been added, call format() that returns the appropriate array of bytes. Order of vectors is preserved.
  * 
  * It is not possible to remove vectors from the object, however, even after calling 
- * format it is possible to add additional vectors and call format() again,
+ * format() it is possible to add additional vectors and call format() again,
  * taking effect on all added vectors, the previous ones and the newly added ones.
  * 
  * @author Jernej Kovacic
