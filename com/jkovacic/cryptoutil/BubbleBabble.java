@@ -34,7 +34,7 @@ package com.jkovacic.cryptoutil;
 public class BubbleBabble 
 {
 
-	// auxilary char arrays, used by encoding algorithm
+	// auxiliary char arrays, used by encoding algorithm
 	private static final char[] VOWELS = "aeiouy".toCharArray();
 	private static final char[] CONSONANTS = "bcdfghklmnprstvzx".toCharArray();
 	
@@ -91,7 +91,7 @@ public class BubbleBabble
 		
 		char[] retVal = new char[6 * (blob.length/2) + 5];
 		
-		// auxilary string for a 5 letter "word" and a dash
+		// auxiliary string for a 5 letter "word" and a dash
 		char [] auxstr = new char[6];
 		
 	    int seed = 1;
