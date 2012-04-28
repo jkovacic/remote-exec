@@ -167,8 +167,21 @@ public abstract class Ssh2
 		}
 		
 		List<PKAlgs> pkalgs = new ArrayList<PKAlgs>();
+		hkloop:
 		for ( Hostkey hk : destination.hostkeys )
 		{
+			// check if the algorithm already is in the list
+			for ( PKAlgs tempalg : pkalgs )
+			{
+				if ( hk.getMethod()==tempalg )
+				{
+					// the lagorithm already is in the list, continue with the external loop
+					continue hkloop;
+				}
+			}
+			
+			// if reaching this point, the algorithm is not yet 
+			// a member of pkalgs, insert it:
 			pkalgs.add(hk.getMethod());
 		}
 		hostkeyAlgs = acceptedSupportedAlgs(pkalgs, availablePublickeyAlgs);
@@ -198,6 +211,7 @@ public abstract class Ssh2
 		{
 			throw new SshException("None of availble compression algorithms selected");
 		}
+
 	}
 	
 	/*
@@ -359,6 +373,6 @@ public abstract class Ssh2
 	public static enum SshImpl
 	{
 		GANYMED,	// Ganymed SSH2
-		JSCH;       // Jsch (can be listed here even though not implemented yet)
+		JSCH;       // Jsch
 	}
 }

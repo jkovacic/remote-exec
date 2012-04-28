@@ -59,8 +59,7 @@ public class HostId
 	}
 	
 	/**
-	 * Inserts a host public key into the list of host keys. Only one "representative"
-	 * of each supported public key algorithms can be inserted
+	 * Inserts a host public key into the list of host keys. 
 	 * 
 	 * @param hostkey - a host key to be inserted
 	 * 
@@ -86,19 +85,7 @@ public class HostId
 		{
 			throw new SshException("Host key methods not specified");
 		}
-		
-		// OK, input data are finally verified, now let us finally check
-		// if a key with the same method already is in the list
-		
-		for ( Hostkey tempkey : hostkeys )
-		{
-			
-			if ( method.equals(tempkey.getMethod()) )
-			{
-				throw new SshException("Method '" + method + "' already used among valid hostkeys");
-			}
-		}
-		
+				
 		// If this point is reached, the method is unique, apply the host key
 		hostkeys.add(hostkey);		
 	}
