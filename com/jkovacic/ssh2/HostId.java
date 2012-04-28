@@ -86,7 +86,7 @@ public class HostId
 			throw new SshException("Host key methods not specified");
 		}
 				
-		// If this point is reached, the method is unique, apply the host key
+		// If this point is reached, the host key looks OK, apply it
 		hostkeys.add(hostkey);		
 	}
 }
