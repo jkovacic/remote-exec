@@ -127,5 +127,5 @@ public class CliNonInteractive implements ICliProcessor
 	        }
 	        
 	        return retOutput;
-	   } // processOutputStreams
+	   }
 }
