@@ -27,6 +27,9 @@ import com.jkovacic.cli.*;
  * http://commons.apache.org/net/
  * This implementation is based on the version 3.1.
  * 
+ * Note: the library does not support obtaining remote process's
+ * exit code, so it is always set to CliOutput.EXITCODE_NOT_SET
+ * 
  * @author Jernej Kovacic
  */
 public final class RshApache extends Rsh 
@@ -155,8 +158,10 @@ public final class RshApache extends Rsh
 			throw new RException("Could not process output streams");
 		}
 		
-		// processOutputStreams returns when the remote process is terminated
+		// processor.process returns when the remote process is terminated
 		
+		// The library does not support exit code
+		retVal.exitCode = CliOutput.EXITCODE_NOT_SET;
 		
 		return retVal;
 	}

@@ -23,13 +23,24 @@ package com.jkovacic.cli;
 * Consult command's man page for more details.
 *
 * Typically all three properties are needed by the calling methods immediately after the external command is executed.
-* Hence there is no need to hide the properties and all three are public.  Get-methods are also available but are actually redundant.  
+* Hence there is no need to hide the properties and all three are public. Get-methods are also available but are actually redundant.
+* 
+* Note: one should not rely on determining of the command's success from the exit code. It is not supported
+* by all CLI implementations. In such a case, EXITCODE_NOT_SET is set.
+* It is a much better idea to process returned output streams and make any conclusions on their basis. 
 * 
 * @author Jernej Kovacic
 */
 
 public class CliOutput
 {
+	/**
+	 * Not all CLI implementations support fetching of command's exit code. 
+	 * In such cases this value is set. This is the lowest possible int value.
+	 * It is very unlikely that any process would ever set it as its exit code.
+	 */
+	public static final int EXITCODE_NOT_SET = Integer.MIN_VALUE; 
+	
 	/**
 	 The exit code after the command has finished. By convention it is set to 0 on success.
 	*/
@@ -55,6 +66,17 @@ public class CliOutput
         exitCode = -1;
     }
 
+    /**
+     * A convenience function to determine whether the 
+     * remote process's exit code was set.
+     * 
+     * @return true/false
+     */
+    public boolean isExitCodeSet()
+    {
+    	return ( EXITCODE_NOT_SET != exitCode );
+    }
+    
     /**
      @return value of exitCode
     */

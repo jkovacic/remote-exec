@@ -287,6 +287,9 @@ public final class SshGanymed extends Ssh2
 	/**
 	 * Execute a command over SSH 'exec'
 	 * 
+	 * Note that some SSH servers may not return the remote process's exit code.
+	 * CliOutput.EXITCODE_NOT_SET is set in such cases.
+	 * 
 	 * @param processor - a class that will process the command's outputs
 	 * @param command - full command to execute, given as one line
 	 * 
@@ -342,7 +345,7 @@ public final class SshGanymed extends Ssh2
 			// some SSH servers may not return it, set to 0 in this case
 			if ( null == exitStatus )
 			{
-				retVal.exitCode = 0; // default value when not available
+				retVal.exitCode = CliOutput.EXITCODE_NOT_SET; // default value when not available
 			}
 			else
 			{

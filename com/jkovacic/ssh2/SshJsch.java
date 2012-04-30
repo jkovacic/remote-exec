@@ -297,6 +297,10 @@ public final class SshJsch extends Ssh2
 	/**
 	 * Execute a command remotely over SSH 'exec'
 	 * 
+	 * Note: if a SSH server does not support returning exit codes, the library
+	 * will return -1, so it is impossible to determine whether this was returned
+	 * by the remote process or it is just a library's signal.
+	 * 
 	 * @param processor - a class that will process the command's outputs
 	 * @param command - full command to execute, given as one line
 	 * 
@@ -355,8 +359,16 @@ public final class SshJsch extends Ssh2
 				
 			}
 			
-			// and fetch the status (if the SSH server supports it)
+			// and fetch the status (if the SSH server supports it):
+			
+			/*
+			 * If the SSH server does not support exit code, it will return -1
+			 * (also returned when channel type is not supposed to return getExitStatus etc.)
+			 * Unfortunately, -1 is a legitimate return value, making it very difficult
+			 * to guess, whether it was returned by the remote process or "just" the library.
+			 */ 
 			retVal.exitCode = channel.getExitStatus();
+			
 			// disconnect the exec channel (the session remains connected)
 			channel.disconnect();
 		}
