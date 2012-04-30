@@ -63,7 +63,7 @@ public class CliOutput
     {
         outStr = null;
         errStr = null;
-        exitCode = -1;
+        exitCode = EXITCODE_NOT_SET;
     }
 
     /**
