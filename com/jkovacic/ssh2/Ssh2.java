@@ -128,13 +128,14 @@ public abstract class Ssh2
 	/**
 	 * Execute a command over SSH 'exec'
 	 * 
+	 * @param processor - a class that will process the command's outputs
 	 * @param command - full command to execute, given as one line
 	 * 
 	 * @return an instance of CliOutput with results of the executed command
 	 * 
 	 * @throws CliException when execution fails for any reason
 	 */
-	public abstract CliOutput exec(String command) throws SshException;
+	public abstract CliOutput exec(ICliProcessor processor, String command) throws SshException;
 	
 	/*
 	 * Calls acceptedSupportedAlgs for each family of encryption algorithms

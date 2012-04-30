@@ -51,13 +51,14 @@ public final class CliRsh extends CliAb
 	/**
 	 * Executes a command over rsh method 'exec'
 	 * 
+	 * @param processor - a class that will process the command's outputs
 	 * @param command - full command to execute, given as one line
 	 * 
 	 * @return an instance of CliOutput with results of the executed command
 	 * 
 	 * @throws CliException when execution fails for any reason
 	 */
-	public CliOutput exec(String command) throws CliException 
+	public CliOutput exec(ICliProcessor processor, String command) throws CliException 
 	{
 		// check input parameters:
 		if ( null==command || 0==command.length() )
@@ -74,7 +75,7 @@ public final class CliRsh extends CliAb
 		
 		try
 		{
-			retVal = remoteContext.exec(command);
+			retVal = remoteContext.exec(processor, command);
 		}
 		catch ( RException ex )
 		{

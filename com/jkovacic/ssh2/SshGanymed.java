@@ -287,13 +287,14 @@ public final class SshGanymed extends Ssh2
 	/**
 	 * Execute a command over SSH 'exec'
 	 * 
+	 * @param processor - a class that will process the command's outputs
 	 * @param command - full command to execute, given as one line
 	 * 
 	 * @return an instance of CliOutput with results of the executed command
 	 * 
 	 * @throws CliException when execution fails for any reason
 	 */
-	public CliOutput exec(String command) throws SshException
+	public CliOutput exec(ICliProcessor processor, String command) throws SshException
 	{
 		CliOutput retVal = null;
 		Session sess = null;
@@ -321,7 +322,7 @@ public final class SshGanymed extends Ssh2
 			try
 			{
 				// use CliUtil functionality to process the output
-				retVal = CliUtil.processOutputStreams(new StreamGobbler(sess.getStdout()), new StreamGobbler(sess.getStderr()) );
+				retVal = processor.process(sess.getStdin(), new StreamGobbler(sess.getStdout()), new StreamGobbler(sess.getStderr()) );
 			}
 			catch ( CliException ex )
 			{

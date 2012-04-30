@@ -37,7 +37,21 @@ package com.jkovacic.cli;
 public interface IExec 
 {
 	/**
-	 * Exec a command
+	 * Execute a command and process it with the class implementing ICliProcessor
+	 * 
+	 * @param processor - an instance of a class that processes the command
+	 * @param command - full command to execute, given as one line
+	 * 
+	 * @return an instance of CliOutput with results of the executed command
+	 * 
+	 * @throws CliException when execution fails for any reason
+	 */
+	public CliOutput exec(ICliProcessor processor, String command) throws CliException;
+	
+	/**
+	 * Execute a command and process it with ClinonInteractive.
+	 * The function is suitable for non-interactive command execution
+	 * where no communication to the command's stdin is necessary.
 	 * 
 	 * @param command - full command to execute, given as one line
 	 * 
@@ -48,7 +62,23 @@ public interface IExec
 	public CliOutput exec(String command) throws CliException;
 	
 	/**
-	 * Exec a command given as an array of parameters. Spaces will be inserted automatically.
+	 * Execute a command given as an array of parameters. Spaces will be inserted automatically.
+	 * The command's output will be processed by an implementation of ICliProcessor.
+	 * 
+	 * @param processor - an instance of a class that processes the command
+	 * @param commands - an array of a command and its parameters. Only parameters till the first occurrence of 'null' are passed.
+	 * 
+	 * @return an instance of CliOutput with results of the executed command
+	 * 
+	 * @throws CliException when execution fails for any reason
+	 */
+	public CliOutput exec(ICliProcessor processor, String[] commands) throws CliException;
+	
+	/**
+	 * Execute a command given as an array of parameters. Spaces will be inserted automatically.
+	 * The command's output is processed by CliNonInteractive. 
+	 * The function is suitable for non-interactive command execution
+	 * where no communication to the command's stdin is necessary.
 	 * 
 	 * @param commands - an array of a command and its parameters. Only parameters till the first occurrence of 'null' are passed.
 	 * 
@@ -61,6 +91,9 @@ public interface IExec
 	/**
 	 * Prepares the CLI environment where applicable, e.g. establish a SSH connection, etc.
 	 * Typically it is called before the first exec is performed.
+	 * 
+	 * The function is suitable for non-interactive command execution
+	 * where no communication to the command's stdin is necessary.
 	 * 
 	 * @throws CliException
 	 */

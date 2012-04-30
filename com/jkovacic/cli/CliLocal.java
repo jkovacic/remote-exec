@@ -39,12 +39,15 @@ public final class CliLocal extends CliAb
     Executes the command, given as a string. No environment parameters are passed to the external command.
     Hence the entire path to the external program must be given. 
     
-    @param  command, e.g. "/bin/iostat -En c0t2d0"
+    @param processor - a class that will process the command's outputs
+    @param command, e.g. "/bin/iostat -En c0t2d0"
+    
     @return instance of CliOutput, containing exit code with results of stdout and stderr
+    
     @throws CliException if an error occurs while trying to execute the "command"
   */
 
-	public CliOutput exec(String command) throws CliException 
+	public CliOutput exec(ICliProcessor processor, String command) throws CliException 
 	{        
  
 		CliOutput retVal = null;
@@ -62,7 +65,7 @@ public final class CliLocal extends CliAb
             Process pr = rt.exec(command);
             
             // process outputs by the universal processing method
-            retVal = CliUtil.processOutputStreams(pr.getInputStream(), pr.getErrorStream());
+            retVal = processor.process(pr.getOutputStream(), pr.getInputStream(), pr.getErrorStream());
             // and assign the exit code
             retVal.exitCode = pr.waitFor();      
         }

@@ -26,6 +26,28 @@ package com.jkovacic.cli;
 
 abstract class CliAb implements IExec 
 {
+	/*
+	 * Probably CliNonInteractive will be used very often to process command's
+	 * output streams. Hence, an instance is created to be passed to exec's with
+	 * no ICliProcessor given. CliNonInteractive is not stateful and could well be
+	 * static if inheritance rules allowed it. This means, one instance of this class
+	 * is sufficient for unlimited number of processings, so the member is static 
+	 */
+	protected static CliNonInteractive noninteractiveCtx = new CliNonInteractive();
+	
+	/**
+	 * Executes a command and processes its output using CliNonInteractive
+	 * 
+	 * @param command - a command to be executed
+	 * 
+	 * @return instance of CliOutput, containing exit code with results of stdout and stderr
+	 * 
+	 * @throws CliException when anything fails
+	 */
+	public CliOutput exec(String command) throws CliException
+	{
+		return exec(noninteractiveCtx, command);
+	}
 	
 	/**
     * Another commonly used method of passing the external command and its parameters is in a form of an array of strings.
@@ -35,11 +57,14 @@ abstract class CliAb implements IExec
     * Hence the entire path to the external program must be given in the first parameter.
     * Spaces are automatically inserted among parameters.
     *
-    * @param  commands - array of a command and parameters, e.g. {"/bin/iostat", "-En", "c0t2d0", null}
+    * @param processor - class that will process the command's outputs
+    * @param commands - array of a command and parameters, e.g. {"/bin/iostat", "-En", "c0t2d0", null}
+    *
     * @return instance of CliOutput, containing exit code with results of stdout and stderr
+    *
     * @throws CliException if an error occurs while trying to execute the command
    */
-   public CliOutput exec(String[] commands) throws CliException
+   public CliOutput exec(ICliProcessor processor, String[] commands) throws CliException
    {
    	// join all array members (actually all till the first occurrence of null) into a string and call runCommand(string)
    	StringBuilder cmd = new StringBuilder("");
@@ -77,7 +102,21 @@ abstract class CliAb implements IExec
    		throw new CliException("Invalid CLI array");
    	}
    	
-   	return exec(cmd.toString());
+   	return exec(processor, cmd.toString());
    }
    
+   /**
+    * Runs exec(commands) (see this method for more info) and process the
+    * command's outputs using CliNonInteractive.
+    * 
+    * @param commands - a null terminated array of commands and parameters to be executed
+    * 
+    * @return instance of CliOutput, containing exit code with results of stdout and stderr
+    * 
+    * @throws CliException when anything fails
+    */
+   public CliOutput exec(String[] commands) throws CliException
+   {
+	   return exec(noninteractiveCtx, commands);
+   }
 }

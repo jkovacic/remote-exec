@@ -43,11 +43,12 @@ public interface Rclient
 	/**
 	 * Executes a remote command over the r* daemon
 	 * 
+	 * @param processor - a class that will process the command's outputs
 	 * @param command to be executed remotely
 	 * 
 	 * @return output of the command
 	 * 
 	 * @throws RException if it fails
 	 */
-	public abstract CliOutput exec(String command) throws RException;
+	public abstract CliOutput exec(ICliProcessor processor, String command) throws RException;
 }

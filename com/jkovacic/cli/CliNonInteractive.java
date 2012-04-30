@@ -17,13 +17,16 @@ limitations under the License.
 package com.jkovacic.cli;
 
 import java.io.*;
+
  /**
-  * Collection of static methods that may be useful in different
-  * classes of this package (nut just the ones derived from CliAb)
+  * Implementation of ICliProcessor that handles non-interactive
+  * command execution, i.e. stdin is ignored and the entire output
+  * (from stdout and stderr) is packed into CliOutput. 
   * 
   * @author Jernej Kovacic
   */
-public class CliUtil 
+
+public class CliNonInteractive implements ICliProcessor
 {
 	/**
 	  Different operating systems use different system specific line separators,
@@ -35,6 +38,7 @@ public class CliUtil
 	/**
 	    * Reads commands output data (from stdout and stderr) and packs it into CliOutput in a friendlier form 
 	    *
+	    * @param stdinStream - OutputStream of stdin (ignored in this class, only declared because of the interface)
 	    * @param stdoutStream - InputStream of stdout
 	    * @param stderrStream - InputStream of stderr
 	    * 
@@ -44,9 +48,15 @@ public class CliUtil
 	    * 
 	    * @see CliOutput, InputStream
 	    */
-	   public static CliOutput processOutputStreams(InputStream stdoutStream, InputStream stderrStream) throws CliException
+	   public CliOutput process(OutputStream stdinStream, InputStream stdoutStream, InputStream stderrStream) throws CliException
 	   {
 
+		   // check of input parameters
+		   if ( null==stdoutStream || null==stderrStream )
+		   {
+			   throw new CliException("Output streams not provided");
+		   }
+		   
 			StringBuilder out = new StringBuilder("");
 	        StringBuilder err = new StringBuilder("");
 	        CliOutput retOutput = new CliOutput();

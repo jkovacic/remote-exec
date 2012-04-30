@@ -297,13 +297,14 @@ public final class SshJsch extends Ssh2
 	/**
 	 * Execute a command remotely over SSH 'exec'
 	 * 
+	 * @param processor - a class that will process the command's outputs
 	 * @param command - full command to execute, given as one line
 	 * 
 	 * @return an instance of CliOutput with results of the executed command
 	 * 
 	 * @throws CliException when execution fails for any reason
 	 */
-	public CliOutput exec(String command) throws SshException 
+	public CliOutput exec(ICliProcessor processor, String command) throws SshException 
 	{
 		CliOutput retVal = null;
 		
@@ -331,7 +332,7 @@ public final class SshJsch extends Ssh2
 			
 			try
 			{
-				retVal = CliUtil.processOutputStreams(channel.getInputStream(), channel.getErrStream() );
+				retVal = processor.process(channel.getOutputStream(), channel.getInputStream(), channel.getErrStream() );
 			}
 			catch ( CliException ex )
 			{

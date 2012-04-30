@@ -112,13 +112,14 @@ public final class RexecApache extends Rexec
 	/**
 	 * Executes a remote command over the r* daemon
 	 * 
+	 * @param processor - a class that will process the command's outputs
 	 * @param command to be executed remotely
 	 * 
 	 * @return output of the command
 	 * 
 	 * @throws RException if it fails
 	 */
-	public CliOutput exec(String command) throws RException 
+	public CliOutput exec(ICliProcessor processor, String command) throws RException 
 	{
 		CliOutput retVal = null;
 		
@@ -150,7 +151,7 @@ public final class RexecApache extends Rexec
 		// ... and process its output
 		try
 		{
-			retVal = CliUtil.processOutputStreams(rexecContext.getInputStream(), rexecContext.getErrorStream() );
+			retVal = processor.process(rexecContext.getOutputStream(), rexecContext.getInputStream(), rexecContext.getErrorStream() );
 		}
 		catch ( CliException ex )
 		{
