@@ -104,7 +104,7 @@ public class Signer
 	{
 		if ( null==kc )
 		{
-			throw new SignerException("Key nort specified");
+			throw new SignerException("Key not specified");
 		}
 		
 		this.kc = kc;
