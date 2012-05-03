@@ -369,7 +369,7 @@ public class DerDecoderPrivateKey extends DerDecoder
 	 */
 	public static void main(String[] args)
 	{
-		// Two fake public keys, generated especially for testing and not used anywhere else
+		// Fake public keys, generated especially for testing and not used anywhere else
 		
 		// 1024-bit RSA key
 		byte[] rsakey = Base64.decode(
@@ -402,13 +402,37 @@ public class DerDecoderPrivateKey extends DerDecoder
 				"72jnWwY0r8bi7131ITbE" ).toCharArray()
 				);
 		
+		// 2048-bit DSA key
+		byte[] dsa2048key = Base64.decode(
+			  ( "MIIDTgIBAAKCAQEA4+C7Aiv8I7wxc+R1emaTmTs0UTsBA9VRpqLaUY31tckXfQUX" +
+				"aVdfPpnhOe2vbjH3aeSwzO7QZxOgb1TNq0n9UtLjiUAKbwU+7K7PRqyBm9U3X5ju" +
+				"hsHGpm/NqVPRKDiRB65xH4nXcOvHHxxEcHDAPGTVfywxzet08HGDcPNp+lPIBozQ" +
+				"VK0GbqM7sO4dAcFbUoVMBckgy4AHfLubL8S1gne7mjkZ12pvioCuGBiZrh5tG2iq" +
+				"eBiNfmnagrcBMMbGfqYJAurFAXrhERUVE0NZZwK4swr2O1Rzmt0gx/wPzAyuoJ2t" +
+				"X4LlMUEA5k8AQl81AgBHZoofM4MW58C87QNK6QIdAvhb4UTOOJ89C9w/71JARv63" +
+				"Pyc6pK40/yw3NDECggEBAIRn5YAul6RNbr0i8MLxGK48Mxy0p/aFfESluJhoStUz" +
+				"7y99Hd2rQ77u3k77+JFI4tO05q40hBO/GX/C8brIenKOBsseFMsKftwMmnNSOqkb" +
+				"UEeE8/zG533C/SOEMOA242DZsCEFuhHN6Bq1AzBTlC0HjGCxYaALbhkz2C2EyI+f" +
+				"TGEjkHm3DxX0Jc/GcVSRgGEs5BcbMPxzKxdR1sCNrvJslqxpkQkHLHtdsgHXD4Jg" +
+				"zTK4bsW7bXo9Cop3bYuFyw8fSKjw7hNwuO51fS3em0FtqGOiEy9dPsrx3H2MfZHq" +
+				"CLMJl/TBiwTfysBo2fD6EpSdajBDBo3sMJCLB2iwTXcCggEAQBH+YUS0cid3pZz3" +
+				"6kQf3ftVgHYOuK+CVtZMRvEQfMp5iDDUhRFeMryakyBCjWscAA2uWU5C67EM59lk" +
+				"SgUoE7xpoWDYlrVAR0vDjfYwjDkWEka9rOvFEmdnFnKr1KQ1EcXQgVtuaS70G5V3" +
+				"d6+j8px5/E0lX6qzvkJaJqWWJaK6sXL6e29pVklUbTJdegAjcrhhRHNQCJ0LHJdJ" +
+				"wrV52zM3tDIvLfc/wRJEkfKFrbV8Gm/f0XYTnCa+IQqBSZ21+kN+8MwreOhhlfwm" +
+				"8/jgitu3CHFXshaMSHdo7mdw7lPJxqxAxUiRTmCDPzxT4hbG4fqTo9rB7ARaSHB2" +
+				"tSgy2QIcazufaFUIvPxwslshi62JXK6ec8cE28pd7+GvlQ==" ).toCharArray()
+				);
+		
 		// initialize one decoder for each key
 		DerDecoderPrivateKey rsaengine = new DerDecoderPrivateKey(AsymmetricAlgorithm.RSA, rsakey);
 		DerDecoderPrivateKey dsaengine = new DerDecoderPrivateKey(AsymmetricAlgorithm.DSA, dsakey);
+		DerDecoderPrivateKey dsa2048engine = new DerDecoderPrivateKey(AsymmetricAlgorithm.DSA, dsa2048key);
 		
 		// start parsing
 		rsaengine.parse();
 		dsaengine.parse();
+		dsa2048engine.parse();
 		
 		// check success of parsing
 		if ( false==rsaengine.ready() )
@@ -418,6 +442,12 @@ public class DerDecoderPrivateKey extends DerDecoder
 		}
 		
 		if ( false==dsaengine.ready() )
+		{
+			System.err.println("DSA parse failed");
+			System.exit(-1);
+		}
+		
+		if ( false==dsa2048engine.ready() )
 		{
 			System.err.println("DSA parse failed");
 			System.exit(-1);
@@ -438,6 +468,19 @@ public class DerDecoderPrivateKey extends DerDecoder
 		byte[] g = dsaengine.get('g');
 		byte[] y = dsaengine.get('y');
 		byte[] x = dsaengine.get('x');
+		
+		System.out.println("P: " + p.length + " bytes");
+		System.out.println("Q: " + q.length + " bytes");
+		System.out.println("G: " + g.length + " bytes");
+		System.out.println("Y: " + y.length + " bytes");
+		System.out.println("X: " + x.length + " bytes");
+		System.out.println();
+		
+		p = dsa2048engine.get('p');
+		q = dsa2048engine.get('q');
+		g = dsa2048engine.get('g');
+		y = dsa2048engine.get('y');
+		x = dsa2048engine.get('x');
 		
 		System.out.println("P: " + p.length + " bytes");
 		System.out.println("Q: " + q.length + " bytes");

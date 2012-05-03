@@ -153,6 +153,81 @@ public final class SshJsch extends Ssh2
 		return buf.toString();
 	}
 	
+	/*
+	 * Adds internal (i.e. the library based) instance of IdentityFile into the IdentityRepository.
+	 * This method does not require implementation of a SSH signature agent. Instead,
+	 * a class with such a functionality is instantiated by the library.
+	 * On the other hand, only RSA and 1024-bit DSA digital signature scheme is possible 
+	 * by this method.
+	 * 
+	 * @throws SshException if anything fails
+	 */
+	// Currently this functionality is not used, resulting in a compiler warning.
+	// However, it may be useful (again) some time in the future, so for now
+	// it will be commented out to suppress the warning.
+	/*
+	private void addInternalIdentity() throws SshException
+	{
+		// Public key authentication. Key material will be parsed from user settings,
+		// then an instance of Identity will be created and passed to the Jsch context.
+		 
+		UserCredentialsPrivateKey pkinst = (UserCredentialsPrivateKey) user;
+		// Parse the specified DER encoded private key information
+		DerDecoderPrivateKey decoder = new DerDecoderPrivateKey(pkinst.getMethod().toCU(), pkinst.getSecret());
+		decoder.parse();
+		if ( false==decoder.ready() )
+		{
+			throw new SshException("Could not prepare a keypair");
+		}
+		
+		// JSch's Identity factory requires the keys' parameters as
+		// SSH formatted vectors in the correct order (depending on key type)
+		SshFormatter cnv = new SshFormatter();
+		byte[] empty = new byte[0];
+		String identity = user.getUsername() + "@" + destination.hostname + ":" + destination.port;
+		
+		// regardless of the key type, the first vector is a string with algorithm's name
+		cnv.add(pkinst.getMethod().getName());
+		
+		// The exact order of key parameter vectors was discovered by scrutinizing of JSch source code
+		switch ( pkinst.getMethod() )
+		{
+		case RSA:
+			cnv.add(decoder.get('n'));
+			cnv.add(decoder.get('e')); 
+			cnv.add(decoder.get('d'));
+			cnv.add(empty);
+			cnv.add(empty);
+			cnv.add(empty);
+			cnv.add(identity);
+			break;
+			
+		case DSA:
+			cnv.add(decoder.get('p'));
+			cnv.add(decoder.get('q'));
+			cnv.add(decoder.get('g'));
+			cnv.add(decoder.get('y'));
+			cnv.add(decoder.get('x'));
+			cnv.add(identity);
+			break;
+			
+		default:
+			throw new SshException("Unsupported asymmetric encryption algorithm");
+		}
+		
+		// The key material structure is ready to instantiate an 
+		// instance of Identity and pass it to the JSch context
+		try
+		{
+			jschcontext.addIdentity(identity, cnv.format(), null, null);
+		}
+		catch ( JSchException ex )
+		{
+			throw new SshException("Could not add an identity");
+		}
+	}
+	*/
+	
 	/**
 	 * Establishes a connection to the SSH server, performs host checking and also
 	 * user authentication. When the connection is established, individual SSH channels
@@ -188,56 +263,20 @@ public final class SshJsch extends Ssh2
 			else if ( UserCredentialsPrivateKey.class == user.getClass() )
 			{
 				/*
-				 * Public key authentication. Key material will be parsed from user settings,
-				 * then an instance of Identity will be created and passed to the Jsch context.
+				 * Instantiate a class implementing Identity that actually performs digital
+				 * signature procedures. At this moment, a class implementing SSH agent functionality
+				 * is used. It is also possible to use the library's internal implementation of this
+				 * interface which supports a limited number of encryption algorithms
+				 * (RSA and 1024-bit DSA). If you still want to use it, just uncomment the
+				 * line below, uncomment implementation of the function and comment out the rest of this function:
 				 */
+				
+				// addInternalIdentity()
+				
 				UserCredentialsPrivateKey pkinst = (UserCredentialsPrivateKey) user;
-				// Parse the specified DER encoded private key information
-				DerDecoderPrivateKey decoder = new DerDecoderPrivateKey(pkinst.getMethod().toCU(), pkinst.getSecret());
-				decoder.parse();
-				if ( false==decoder.ready() )
-				{
-					throw new SshException("Could not prepare a keypair");
-				}
-				
-				// JSch's Identity factory requires the keys' parameters as
-				// SSH formatted vectors in the correct order (depending on key type)
-				SshFormatter cnv = new SshFormatter();
-				byte[] empty = new byte[0];
-				String identity = user.getUsername() + "@" + destination.hostname + ":" + destination.port;
-				
-				// regardless of the key type, the first vector is a string with algorithm's name
-				cnv.add(pkinst.getMethod().getName());
-				
-				// The exact order of key parameter vectors was discovered by scrutinizing of JSch source code
-				switch ( pkinst.getMethod() )
-				{
-				case RSA:
-					cnv.add(decoder.get('n'));
-					cnv.add(decoder.get('e')); 
-					cnv.add(decoder.get('d'));
-					cnv.add(empty);
-					cnv.add(empty);
-					cnv.add(empty);
-					cnv.add(identity);
-					break;
-					
-				case DSA:
-					cnv.add(decoder.get('p'));
-					cnv.add(decoder.get('q'));
-					cnv.add(decoder.get('g'));
-					cnv.add(decoder.get('y'));
-					cnv.add(decoder.get('x'));
-					cnv.add(identity);
-					break;
-					
-				default:
-					throw new SshException("Unsupported asymmetric encryption algorithm");
-				}
-				
-				// The key material structure is ready to instantiate an 
-				// instance of Identity and pass it to the JSch context
-				jschcontext.addIdentity(identity, cnv.format(), null, null);
+				jschcontext.addIdentity(
+						new AuthBlobSigner(pkinst.getMethod(), pkinst.getSecret()), 
+						null);
 			}
 			else
 			{
@@ -512,4 +551,243 @@ public final class SshJsch extends Ssh2
 		}
 	}
 	
+	/*
+	 * An internal class (not to be used outside of the main class) that
+	 * implements JSch's interface Identity. It performs digital signature
+	 * and implements a SSH agent. It may be useful to support additional 
+	 * signature algorithms, not supported by the JSch library (e.g. ECDSA),
+	 * to use other cryptographic providers etc. 
+	 * 
+	 * @author Jernej Kovacic
+	 */
+	private class AuthBlobSigner implements Identity
+	{
+		// Public key blob, often required by the library routines
+		private byte[] pubkey = null;
+		
+		// Asymmetric algorithm
+		private PKAlgs method = null;
+		
+		// Key pair
+		private KeyCreator kc = null; 
+		
+		/*
+		 * Constructor, initializes the class
+		 * 
+		 * @param method - asymmetric encryption algorithm
+		 * @param key - DER encoded key material
+		 */
+		public AuthBlobSigner(PKAlgs method, byte[] key)
+		{
+			this.method = method;
+			getKeyMaterial(key);
+		}
+		
+		/*
+		 * Extracts key material and prepares signature keys.
+		 * Public key blobs are defined in RFC4253, Section 6.6
+		 * http://tools.ietf.org/html/rfc4253#section-6.6
+		 * 
+		 * @param key - DER encoded key material
+		 */
+		private void getKeyMaterial(byte[] key)
+		{
+			// Parse key material out of the DER encoded key
+			DerDecoderPrivateKey decoder = new DerDecoderPrivateKey(method.toCU(), key);
+			decoder.parse();
+			
+			if ( false == decoder.ready() )
+			{
+				// For now, just exit the function immediately.
+				// No keys will be set, later resulting in authentication failure
+				return;
+			}
+			
+			// A utility class for preparation of public key blobs
+			SshFormatter pubkeyForm = new SshFormatter();
+			
+			// Prepare key pairs for signing and public key blobs
+			switch (method)
+			{
+			case RSA:
+				kc = KeyCreator.createRSAinstance(
+						decoder.get('n'), 
+						decoder.get('e'), 
+						decoder.get('d') );
+				
+				pubkeyForm.add(method.getName());
+				pubkeyForm.add(decoder.get('e'));
+				pubkeyForm.add(decoder.get('n'));
+				pubkey = pubkeyForm.format();
+				
+				break;
+				
+			case DSA:
+				kc = KeyCreator.createDSAinstance(
+						decoder.get('p'), 
+						decoder.get('q'), 
+						decoder.get('g'), 
+						decoder.get('y'), 
+						decoder.get('x') );
+				
+				pubkeyForm.add(method.getName());
+				pubkeyForm.add(decoder.get('p'));
+				pubkeyForm.add(decoder.get('q'));
+				pubkeyForm.add(decoder.get('g'));
+				pubkeyForm.add(decoder.get('y'));
+				pubkey = pubkeyForm.format();
+				
+				break;
+				
+			default:
+				// Unsupported encryption algorithm.
+				// Nothing really to do here as keys have not
+				// been prepared anyway, later resulting in authentication failure
+				return;
+			}
+		}
+		
+		/*
+		 * This method, required by interface, should check if the passphrase is correct.
+		 * This class will always receive already decrypted key, so this method is
+		 * not really necessary and will always return true.
+		 * 
+		 * @return always true
+		 * 
+		 * @throws JSchException - never thrown in this class
+		 */
+		public boolean setPassphrase(byte[] passphrase) throws JSchException
+		{
+			return true;
+		}
+		
+		/*
+		 * @return public key blob, ready to be sent to a SSH server
+		 */
+		public byte[] getPublicKeyBlob()
+		{
+			return pubkey;
+		}
+		
+		/*
+		 * This method performs digital signature. SSH standard requires method name to
+		 * be prepended to the signature which is also done by this method.
+		 * See RFC 4253, Section 6.6 for more information:
+		 * http://tools.ietf.org/html/rfc4253#section-6.6
+		 * 
+		 * Currently only SHA-1 with RSA or DSA is supported.
+		 * 
+		 * @return digital signature, ready to be sent to a SSH server
+		 */
+		public byte[] getSignature(byte[] data)
+		{
+			byte[] retVal = null;
+			try
+			{
+				// Prepare a signature using Signer
+				Signer sig = Signer.getInstance(DigestAlgorithm.SHA1);
+				sig.passKey(kc);
+				sig.sign(data);
+				
+				if ( false == sig.signatureReady() )
+				{
+					// if signing was unsuccessful just return null (i.e. no signature)
+					// which will result in an authentication failure
+					return null;
+				}
+				
+				// Prepare a signature blob as required by theSSH standard: RFC 4253, Section 6.6:
+				// http://tools.ietf.org/html/rfc4253#section-6.6
+				
+				// regardless of the key type, the blob will start with the algorithm name
+				SshFormatter form = new SshFormatter();
+				form.add(method.getName());
+				switch (method)
+				{
+				case RSA:
+					// RSA signature format is already SSH standard compliant
+					form.add(sig.getSignature());
+					break;
+					
+				case DSA:
+				{
+					// DSA signature format, returned by Java cryptography providers (and Signer),
+					// is ASN.1. However, SSH standard requires it to be converted to IEEE P1363 format.
+					// This is implemented by DsaSignatureAdapter.
+					DsaSignatureAdapter conv = new DsaSignatureAdapter(sig.getSignature());
+					conv.convert();
+					// if signing failed, null will be returned, later resulting in an authentication failure
+					form.add(conv.getSshsignature());
+					break;
+				}
+				
+				default:
+					// unsupported key type, return null which will later result in
+					// an authentication failure.
+					return null;
+				}
+				
+				// Signing and (possibly) conversion were successful, format the signature blob
+				retVal = form.format();
+			}
+			catch ( SignerException ex )
+			{
+				retVal = null;
+			}
+			
+			
+			return retVal;
+		}
+		
+		/*
+		 * This method is required by the interface but (probably) never called.
+		 * Hence it always returns true.
+		 * 
+		 * @return always true
+		 */
+		public boolean decrypt()
+		{
+			return true;
+		}
+		
+		/*
+		 * @return Asymmetric algorithm name as defined by the SSH standard (RFC 4253)
+		 */
+		public String getAlgName()
+		{
+			return method.getName();
+		}
+		
+		/*
+		 * Identity name is used internally by the library routines.
+		 * It can be set to anything.
+		 * 
+		 * @return an arbitrary string
+		 */
+		public String getName()
+		{
+			return "JschAuthBlobSigner";
+		}
+		
+		/*
+		 * This method is supposed to return information whether the private
+		 * key is encrypted. It is not the case in this class, so false
+		 * will be returned always.
+		 * 
+		 *  @return always false
+		 */
+		public boolean isEncrypted()
+		{
+			return false;
+		}
+		
+		/*
+		 * This method is supposed to cleanup the class before the identity is removed.
+		 * It is not necessary to cleanup anything inside this class so the method is empty. 
+		 */
+		public void clear()
+		{
+			// nothing to do
+		}
+	}
 }

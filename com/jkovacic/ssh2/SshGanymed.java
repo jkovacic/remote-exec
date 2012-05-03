@@ -30,6 +30,9 @@ import ch.ethz.ssh2.*;
   *
   * This implementation was developed on build 250.
   * 
+  * NOTE: among public key authentication schemes, the library only supports
+  * RSA keys and 1024-bit DSA keys.
+  * 
   * @author Jernej Kovacic
 */
 public final class SshGanymed extends Ssh2
@@ -134,11 +137,6 @@ public final class SshGanymed extends Ssh2
 	 */
 	private boolean authenticate(UserCredentialsPrivateKey user) throws IOException
 	{
-		/*
-		 * NOTE: it looks like Ganymed SSH2 has problems with DSA based authentcation.
-		 * Need to research the issue further.
-		 * RSA based authentication works fine.
-		 */
 		String header = null;
 		String footer = null;
 		
@@ -156,7 +154,6 @@ public final class SshGanymed extends Ssh2
 			header = "-----BEGIN RSA PRIVATE KEY-----";
 			footer = "-----END RSA PRIVATE KEY-----";
 		}
-		// TODO: Elliptic curve signature algorithms!
 		
 		// ... and prepare a PEM structure.
 		// Note that the library is flexible about the line length and line separators

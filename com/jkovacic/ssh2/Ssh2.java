@@ -25,10 +25,6 @@ import java.util.*;
  * SSH functionality. An actual class, based on a chosen crypto/SSH library
  * (e.g. GanymedSSH2, Jsch, etc.), must be derived from this one. 
  * 
- * Note, regardless of the chosen SSH library, problems with DSA private keys
- * were observed, unless the key pair was generated using JSch's KeyPair.genKeyPair()
- * and such not longer than 1024 bit.
- * 
  * @author Jernej Kovacic
  *
  * @see SshGanymed, SshJsch

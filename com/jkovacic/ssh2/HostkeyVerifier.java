@@ -77,13 +77,13 @@ class HostkeyVerifier
 		try
 		{
 			byte[] digest = null;
-			md =  MessageDigest.getInstance("MD5");
+			md =  MessageDigest.getInstance(DigestAlgorithm.MD5.getName());
 			
 			digest = md.digest(hkey);
 			md5hash = new String(ByteHex.toHex(digest)); 
 			md.reset();
 			
-			md = MessageDigest.getInstance("SHA1");
+			md = MessageDigest.getInstance(DigestAlgorithm.SHA1.getName());
 			digest = md.digest(hkey);
 			bbhash = new String(BubbleBabble.encode(digest));
 		}

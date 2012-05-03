@@ -21,7 +21,8 @@ import java.security.*;
 
 /**
  * Implementation of a digital signature, based on a hash and private key cryptography.
- * It may be handy to implement a SSH key agent.
+ * It may be handy to implement a SSH key agent or provide additional asymmetric algorithms,
+ * not provided by SSH libraries, e.g. ECDSA.
  * 
  * The implemented procedure is stateful, so the methods must be called in the correct order,
  * as described below:
@@ -33,6 +34,9 @@ import java.security.*;
  * - When keys are ready, data can be passed by calling sign().
  * - Check success of signing by calling signatureReady()
  * - If the signature process is successful, the signature is available by calling getSignature() 
+ * 
+ * Note: at the moment, only SHA-1 with RSA or DSA digital signatures are supported.
+ * It is easy to extend the class and support other algorithms and their combinations.
  * 
  * @author Jernej Kovacic
  */
@@ -81,7 +85,7 @@ public class Signer
 		// is the digest algorithm specified?
 		if ( null==hashalg)
 		{
-			throw new SignerException("Unpecified signature algorithms");
+			throw new SignerException("Unspecified signature algorithms");
 		}
 		
 		// is it among supported ones? (currently only SHA-1 is supported)

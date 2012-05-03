@@ -52,6 +52,12 @@ public class DerDecoder
 	{
 		this.der = blob;
 		this.pos = 0;
+		
+		// "protection" from null dereferencing:
+		if ( null == this.der )
+		{
+			this.der = new byte[0];
+		}
 	}
 	
 	/*
@@ -344,12 +350,12 @@ public class DerDecoder
 	 * 
 	 * @author Jernej Kovacic
 	 */
-	class SequenceRange
+	protected class SequenceRange
 	{
 		// Start of a byte range within DER
-		protected int seqstart = 0;
+		public int seqstart = 0;
 		// Length of the byte range
-		protected int seqlen = 0;
+		public int seqlen = 0;
 	}
 	
 	/**
@@ -358,7 +364,7 @@ public class DerDecoder
 	 * 
 	 * @author Jernej Kovacic
 	 */
-	class DerException extends Exception
+	protected class DerException extends Exception
 	{
 		static final long serialVersionUID = 76341274L; 
 		DerException(String desc)
