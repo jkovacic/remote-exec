@@ -43,6 +43,9 @@ import com.jkovacic.cryptoutil.*;
 
 public class DsaSignatureAdapter extends DerDecoder
 {
+	// Length (in bytes) of one signature element for 1024-bit DSA signatures
+	private static final int DSA_SIG_ELEMENT_LENGTH = 20;
+	
 	// two components of DSA digital signature, for details, see:
 	// http://en.wikipedia.org/wiki/Digital_Signature_Algorithm
 	private byte[] r = null;
@@ -142,32 +145,64 @@ public class DsaSignatureAdapter extends DerDecoder
 		 * http://www.codeproject.com/Articles/25590/Cryptographic-Interoperability-Digital-Signatures#xx3240277xx
 		*/
 		
+		// r and s must not be longer than (DSA_SIG_ELEMENT_LENGTH+1)
+		// See discussion below for more details
+		if ( r.length<1 || r.length>DSA_SIG_ELEMENT_LENGTH+1 ||
+			 s.length<1 || s.length>DSA_SIG_ELEMENT_LENGTH+1 )
+		{
+			return false;
+		}
+		
 		// the SSH compliant signature will be exactly 40 bytes long:
 		// 20 bytes for r, immediately followed by 20 bytes for s:
-		sshSignature = new byte[40];
+		sshSignature = new byte[2*DSA_SIG_ELEMENT_LENGTH];
 		
 		// Java should initialize the array to zeros but it doesn't hurt to do it manually as well:
 		Arrays.fill(sshSignature, (byte) 0);
 		
-		// copy the appropriate number of bytes of r:
-		System.arraycopy(
-				r, 
-				(r.length>20 ? 1 : 0),
-			    sshSignature, 
-			    (r.length>20 ? 0 : 20-r.length),
-			    (r.length>20 ? 20 : r.length) );
+		craftSignatureElement(r, sshSignature, 0);
+		craftSignatureElement(s, sshSignature, DSA_SIG_ELEMENT_LENGTH);
 		
-		// followed by the appropriate number of bytes of s:
-	    System.arraycopy(
-	    		s, 
-	    		(s.length>20 ? 1 : 0),
-	    		sshSignature, 
-	    		(s.length>20 ? 20 : 40-s.length),
-			    (s.length>20 ? 20 : s.length) );
-
 		// if reaching this point, the conversion is successful
 		sigReady = true;
 		return true;
+	}
+	
+	/*
+	 * Process the 'element' to be SSH compliant and copy it into the
+	 * appropriate position (defined by 'destpos') of 'dest'.
+	 * 
+	 * @param element - vector to be processed and copied
+	 * @param dest - vector where the processed 'element' will be copied to
+	 * @param destpos - starting position of 'dest' where processed 'element' will be copied
+	 */
+	private void craftSignatureElement(byte[] element, byte[] dest, int destpos)
+	{
+		// check of input parameters
+		if ( null==element || null==dest )
+		{
+			return;
+		}
+		
+		if ( (destpos + DSA_SIG_ELEMENT_LENGTH) > dest.length )
+		{
+			return;
+		}
+		
+		try
+		{
+			System.arraycopy(
+					element, 
+					(element.length>DSA_SIG_ELEMENT_LENGTH ? 1 : 0), 
+					dest,
+					(element.length>DSA_SIG_ELEMENT_LENGTH ? destpos : destpos+element.length-DSA_SIG_ELEMENT_LENGTH), 
+					(element.length>DSA_SIG_ELEMENT_LENGTH ? DSA_SIG_ELEMENT_LENGTH : element.length) );
+		}
+		catch ( ArrayIndexOutOfBoundsException ex )
+		{
+			return;
+		}
+		
 	}
 	
 	/**
