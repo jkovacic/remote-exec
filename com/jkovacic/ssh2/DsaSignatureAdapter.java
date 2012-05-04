@@ -193,7 +193,7 @@ public class DsaSignatureAdapter extends DerDecoder
 		{
 			System.arraycopy(
 					element, 
-					(element.length>DSA_SIG_ELEMENT_LENGTH ? 1 : 0), 
+					(element.length>DSA_SIG_ELEMENT_LENGTH ? element.length-DSA_SIG_ELEMENT_LENGTH : 0), 
 					dest,
 					(element.length>DSA_SIG_ELEMENT_LENGTH ? destpos : destpos+element.length-DSA_SIG_ELEMENT_LENGTH), 
 					(element.length>DSA_SIG_ELEMENT_LENGTH ? DSA_SIG_ELEMENT_LENGTH : element.length) );
