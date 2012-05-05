@@ -17,6 +17,7 @@ limitations under the License.
 package com.jkovacic.ssh2;
 
 import com.jkovacic.cli.*;
+import com.jkovacic.cryptoutil.*;
 
 import java.util.*;
 
@@ -296,11 +297,82 @@ public abstract class Ssh2
 			{
 				throw new SshException("No public key method provided");
 			}
+			
+			if ( PKAlgs.DSA == upk.getMethod() )
+			{
+				checkDsaKey(upk.getSecret());
+			}
 		}
 		else
 		{
 			// Neither a password nor a PK auth method. Currently this is unsupported.
 			throw new SshException("Unsupported authentication method");
+		}
+	}
+	
+	/*
+	 * Checks if the DSA key will produce a signature of proper size.
+	 * 
+	 * @param dsakey - DER encoded DSA private key
+	 * 
+	 * @throws SshException in case of inappropriate key parameters
+	 */
+	private void checkDsaKey(byte[] dsakey) throws SshException
+	{
+		// check of input parameter
+		if ( null == dsakey )
+		{
+			throw new SshException("Could not check a DSA key");
+		}
+		
+		/*
+		 * For DSA signatures, SSH standard (RFC 4253) strictly requires 40 byte signature
+		 * blobs. Typically this is a case for 1024-bit DSA keys. If a longer DSA key pair is properly 
+		 * generated, its subprime (Q) would be longer, resulting in longer signatures which is not
+		 * supported by the SSH specifications. However, some key generators (e.g. Putty or OpenSSH) can generate
+		 * longer DSA keys with shorter Q that can generate short enough signatures to perform authentication.
+		 * In other words, it is possible to use "adapted" DSA keys longer than 1024-bit, however such keys are not
+		 * stronger than 1024-bit keys. More info about this at:
+		 * https://fogbugz.bitvise.com/default.asp?Tunnelier.2.5037.1 
+		 * 
+		 * This method will parse the DSA key and check if size of the Q parameter is appropriate.
+		 */
+		DerDecoderPrivateKey decoder = new DerDecoderPrivateKey(PKAlgs.DSA.toCU(), dsakey);
+		decoder.parse();
+		if ( false == decoder.ready() )
+		{
+			throw new SshException("Invalid DSA key");
+		}
+		
+		/*
+		 * The DSA digital signature consists of two elements: r and s.
+		 * As it is obvious from this article:
+		 * http://en.wikipedia.org/wiki/Digital_Signature_Algorithm
+		 * Q is a modulo in equations for both elements and as such it determines
+		 * their size. For that reason, Q will be parsed from the private key and 
+		 * its size will be checked. It must not exceed 20 bytes (or additional byte
+		 * determining its sign).
+		 */
+		byte[] q = decoder.get('q');
+		if ( null == q )
+		{
+			throw new SshException("Could not parse the DSA Q parameter");
+		}
+		
+		if ( !( 20==q.length || 21==q.length) )
+		{
+			throw new SshException("Unsupported DSA key size");
+		}
+		
+		/*
+		 * If the MSB of the actual Q is 1, the whole parameter would be negative,
+		 * hence additional 0-byte is prepended to it. In this case Q must be 21
+		 * bytes long, the first byte must equal 0 and the next byte must be "negative"
+		 */
+		if ( !( (20==q.length && q[0]<0) ||
+			    (21==q.length && 0==q[0] && q[1]<0) ) )  
+		{
+			throw new SshException("Unsupported DSA key size");
 		}
 	}
 	

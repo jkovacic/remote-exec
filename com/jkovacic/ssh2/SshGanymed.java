@@ -30,8 +30,7 @@ import ch.ethz.ssh2.*;
   *
   * This implementation was developed on build 250.
   * 
-  * NOTE: among public key authentication schemes, the library only supports
-  * RSA keys and 1024-bit DSA keys.
+  * For public key user authentication, Ganymed SSH2 only supports RSA and DSA keys.
   * 
   * @author Jernej Kovacic
 */
