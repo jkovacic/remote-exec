@@ -130,9 +130,23 @@ public abstract class Ssh2
 	 * 
 	 * @return an instance of CliOutput with results of the executed command
 	 * 
-	 * @throws CliException when execution fails for any reason
+	 * @throws SshException when execution fails for any reason
 	 */
 	public abstract CliOutput exec(ICliProcessor processor, String command) throws SshException;
+	
+	/**
+	 * Execute a command over SSH 'exec' and process its output via CliNonInteractive
+	 * 
+	 * @param command - full command to execute, given as one line
+	 * 
+	 * @return an instance of CliOutput with results of the executed command
+	 * 
+	 * @throws SshException when execution fails for any reason
+	 */
+	public CliOutput exec(String command) throws SshException
+	{
+		return exec(new CliNonInteractive(), command);
+	}
 	
 	/*
 	 * Calls acceptedSupportedAlgs for each family of encryption algorithms
