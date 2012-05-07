@@ -27,7 +27,7 @@ package com.jkovacic.cryptoutil;
  * Although it would be possible to use this class directly, typically a more 
  * specialized class will be derived from it.
  * 
- * ASN.1 specification, DER is based on, is available at:
+ * ASN.1 specification that DER is based on, is available at:
  * http://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf
  * 
  * @author Jernej Kovacic
@@ -46,7 +46,7 @@ public class DerDecoder
 	 * 
 	 * Initializes the class with the input in DER encoding
 	 * 
-	 * @param blob - contents n DER encoding to be parsed
+	 * @param blob - contents in DER encoding to be parsed
 	 */
 	public DerDecoder(byte[] blob)
 	{
@@ -143,8 +143,46 @@ public class DerDecoder
 		return retVal;
 	}
 	
+	/*
+	 * Parses various ASN.1 "container" structures (e.g. SEQUENCE), i.e. determines 
+	 * its start and length. This is a convenience common method, called by other
+	 * methods thta parse actual container types.
+	 * 
+	 * Note: it does not read the actual container data and the "cursor"
+	 * is set to the first byte of the actual container data!
+	 * 
+	 * @param contType - type of container to be parsed
+	 * 
+	 * @return container's start and length
+	 * 
+	 * @throws DerException in case of invalid syntax of the container
+	 */
+	private SequenceRange parseContainer(Asn1Types contType) throws DerException
+	{
+		byte type = readByte();
+		
+		// ASN.1 container starts with a taype code...
+		if ( contType.getValue() != (type & 0xff) )
+		{
+			throw new DerException("Invalid ASN.1 container code");
+		}
+		
+		// ... followed by the container's length
+		int len = parseLength();
+		if ( (pos+len) > der.length )
+		{
+			throw new DerException("Container too long");
+		}
+		
+		SequenceRange retVal = new SequenceRange();
+		retVal.seqlen = len;
+		retVal.seqstart = pos;
+		
+		return retVal;
+	}
+	
 	/**
-	 * Parses the ASN.1 sequence, i.e. determines its start and length
+	 * Parses the ASN.1 sequence, i.e. determines its start and length.
 	 * 
 	 * Note: it does not read the actual sequence data and the "cursor"
 	 * is set to the first byte of the actual sequence data!
@@ -155,24 +193,73 @@ public class DerDecoder
 	 */
 	protected SequenceRange parseSequence() throws DerException
 	{
-		byte type = readByte();
+		return parseContainer(Asn1Types.SEQUENCE);
+	}
+	
+	/**
+	 * Parses (i.e. determines its start and length) the so called "container 0",
+	 * a special type defined by the SEC standard to store EC keys' data.
+	 * 
+	 * Note: it does not read the actual container's data and the "cursor"
+	 * is set to the first byte of the actual container's data!
+	 * 
+	 * @return container's start and length
+	 * 
+	 * @throws DerException in case of invalid syntax of the container
+	 */
+	protected SequenceRange parseContainer0() throws DerException
+	{
+		return parseContainer(Asn1Types.CONTAINER0);
+	}
+	
+	/**
+	 * Parses (i.e. determines its start and length) the so called "container 1",
+	 * a special type defined by the SEC standard to store EC keys' data.
+	 * 
+	 * Note: it does not read the actual container's data and the "cursor"
+	 * is set to the first byte of the actual container's data!
+	 * 
+	 * @return container's start and length
+	 * 
+	 * @throws DerException in case of invalid syntax of the container
+	 */
+	protected SequenceRange parseContainer1() throws DerException
+	{
+		return parseContainer(Asn1Types.CONTAINER1);
+	}
+	
+	/*
+	 * Parses (i.e. determines its start position and length) the ASN.1 primitive 
+	 * types, i.e. types that actually contain some data, e.g INTEGER, OCTET_STREAM, etc. 
+	 * Typically the data may be long so they should be copied into byte[] and processed further.
+	 * 
+	 * The cursor is moved to the first byte of the next field.
+	 * 
+	 * @param type - ASN.1 primitive type to be parsed
+	 * 
+	 * @return primitive's start and length in bytes
+	 * 
+	 * @throws DerException in case something is wrong in the data format
+	 */
+	private SequenceRange parsePrimitive(Asn1Types type) throws DerException
+	{	
+		byte b = readByte();
 		
-		// ASN.1 sequence starts with the code 0x30...
-		if ( 0x30 != (type & 0xff) )
+		// ASN.1 type starts with a type's code...
+		if ( type.getValue() != (b & 0xff) )
 		{
-			throw new DerException("Invalid ASN.1 sequence code");
+			throw new DerException("Invalid code for the requested ASN.1 type");
 		}
 		
-		// ... followed by the sequence length
+		// followed by the length of the primitive data
 		int len = parseLength();
-		if ( (pos+len) > der.length )
-		{
-			throw new DerException("Sequence too long");
-		}
-		
+	
 		SequenceRange retVal = new SequenceRange();
-		retVal.seqlen = len;
 		retVal.seqstart = pos;
+		retVal.seqlen = len;
+		
+		// move the cursor to the end of the data range
+		pos += len;
 		
 		return retVal;
 	}
@@ -184,31 +271,83 @@ public class DerDecoder
 	 * 
 	 * The cursor is moved to the first byte of the next field.
 	 * 
-	 * @return integers tart and length in bytes
+	 * @return integer's start and length in bytes
 	 * 
 	 * @throws DerException in case of invalid syntax of the integer
 	 */
 	protected SequenceRange parseInteger() throws DerException
-	{	
-		byte b = readByte();
-		
-		// ASN.1 integer starts with the code 0x02...
-		if ( 0x02 != (b & 0xff) )
+	{
+		try
+		{
+			return parsePrimitive(Asn1Types.INTEGER);
+		}
+		catch ( DerException ex )
 		{
 			throw new DerException("Invalid code for ASN.1 integer");
 		}
-		
-		// followed by the length of the integer
-		int len = parseLength();
+	}
 	
-		SequenceRange retVal = new SequenceRange();
-		retVal.seqstart = pos;
-		retVal.seqlen = len;
-		
-		// move the cursor to the end of the integer
-		pos += len;
-		
-		return retVal;
+	/**
+	 * Parses the ASN.1 octet string, i.e. determines its start position and length
+	 * 
+	 * The cursor is moved to the first byte of the next field.
+	 * 
+	 * @return octet string's start and length in bytes
+	 * 
+	 * @throws DerException in case of invalid syntax of the octet string
+	 */
+	protected SequenceRange parseOctetString() throws DerException
+	{
+		try
+		{
+			return parsePrimitive(Asn1Types.OCTET_STRING);
+		}
+		catch ( DerException ex )
+		{
+			throw new DerException("Invalid code for ASN.1 octet string");
+		}
+	}
+	
+	/**
+	 * Parses the ASN.1 bit string, i.e. determines its start position and length
+	 * 
+	 * The cursor is moved to the first byte of the next field.
+	 * 
+	 * @return bit string's start and length in bytes
+	 * 
+	 * @throws DerException in case of invalid syntax of the bit string
+	 */
+	protected SequenceRange parseBitString() throws DerException
+	{
+		try
+		{
+			return parsePrimitive(Asn1Types.BIT_STRING);
+		}
+		catch ( DerException ex )
+		{
+			throw new DerException("Invalid code for ASN.1 bit string");
+		}
+	}
+	
+	/**
+	 * Parses the ASN.1 object, i.e. determines its start position and length
+	 * 
+	 * The cursor is moved to the first byte of the next field.
+	 * 
+	 * @return object's start and length in bytes
+	 * 
+	 * @throws DerException in case of invalid syntax of the object
+	 */
+	protected SequenceRange parseObject() throws DerException
+	{
+		try
+		{
+			return parsePrimitive(Asn1Types.OBJECT);
+		}
+		catch ( DerException ex )
+		{
+			throw new DerException("Invalid code for ASN.1 bit string");
+		}
 	}
 	
 	/**
@@ -222,7 +361,7 @@ public class DerDecoder
 	 */
 	protected byte[] toByteArray(SequenceRange range)
 	{
-		// Input paramater must be specified, its fields must not be negative,
+		// Input parameter must be specified, its fields must not be negative,
 		// and it must not point out of the range
 		if ( 
 				null==range ||
@@ -320,26 +459,39 @@ public class DerDecoder
 		return ( from < der.length );
 	}
 	
+	/*
+	 * Could field, pointed by the cursor, represent an ASN.1 type?
+	 * Only the code is checked, not the whole possible sequence.
+	 *
+	 * @param type - data type to be checked
+	 * 
+	 * @return true/false
+	 */
+	private boolean isASN1Type(Asn1Types type)
+	{
+		return ( pos<der.length && type.getValue()==(der[pos] & 0xff));
+	}
+	
 	/**
-	 * Could field, pointed by the cursor,  represent an ASN.1 sequence?
+	 * Could field, pointed by the cursor, represent an ASN.1 sequence?
 	 * Only the code is checked, not the whole sequence.
 	 * 
 	 * @return true/false
 	 */
 	protected boolean isASN1Sequence()
 	{
-		return ( pos<der.length && 0x30==der[pos] );
+		return isASN1Type(Asn1Types.SEQUENCE);
 	}
 	
 	/**
-	 * Could field, pointed by the cursor,  represent an ASN.1 integer?
+	 * Could field, pointed by the cursor, represent an ASN.1 integer?
 	 * Only the code is checked, not the whole possible integer sequence.
 	 * 
 	 * @return true/false
 	 */
 	public boolean isASN1Int()
 	{
-		return ( pos<der.length && 0x02==der[pos] );
+		return isASN1Type(Asn1Types.INTEGER);
 	}
 	
 	/**
@@ -352,9 +504,9 @@ public class DerDecoder
 	 */
 	protected class SequenceRange
 	{
-		// Start of a byte range within DER
+		/** Start of a byte range within DER */
 		public int seqstart = 0;
-		// Length of the byte range
+		/** Length of the byte range */
 		public int seqlen = 0;
 	}
 	
@@ -373,4 +525,41 @@ public class DerDecoder
 		}
 	}
 
+	/**
+	 * An enumerator with currently supported ASN.1 types and their numeric codes.
+	 * It is possible to easily add more types if necessary.
+	 * 
+	 * @author Jernej Kovacic
+	 */
+	private enum Asn1Types
+	{
+		SEQUENCE(0x30),
+		INTEGER(0x02),
+		BIT_STRING(0x03),
+		OBJECT(0x06),
+		OCTET_STRING(0x04),
+		// EC key specific types:
+		CONTAINER0(0xA0),
+		CONTAINER1(0xA1);
+		
+		private int value;
+		
+		/*
+		 * Constructor. Assigns a numeric value to a field
+		 * 
+		 * @param val - numeric value
+		 */
+		Asn1Types(int val)
+		{
+			this.value = val;
+		}
+		
+		/**
+		 * @return - field's numeric value as defined by the ASN.1 standard
+		 */
+		public int getValue()
+		{
+			return value;
+		}
+	}
 }

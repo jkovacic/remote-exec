@@ -28,7 +28,10 @@ package com.jkovacic.cryptoutil;
 public enum AsymmetricAlgorithm implements IEncryptionAlgorithmFamily
 {
 	DSA("DSA"),
-	RSA("RSA");
+	RSA("RSA"),
+	ECDSA_NISTP256("ECDSA-P256"),
+	ECDSA_NISTP384("ECDSA-P384"),
+	ECDSA_NISTP521("ECDSA-P521");
 	
 	private String desc = null;
 	

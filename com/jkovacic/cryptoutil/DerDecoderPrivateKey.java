@@ -35,9 +35,11 @@ import java.util.*;
  * Format of RSA private keys is explained in RFC 2437:
  * http://tools.ietf.org/html/rfc2437
  * 
- * Format of DSA private keys is evident from the OpenSSH source code,
- * basically also explained at:
- * http://search.cpan.org/~btrott/Convert-PEM-0.08/lib/Convert/PEM.pm
+ * Format of DSA private keys is explained at OpenSSL site:
+ * http://www.openssl.org/docs/apps/dsa.html
+ * 
+ * Format of ECDSA keys is defined by the standard SEC1, appendix C4:
+ * http://www.secg.org/download/aid-780/sec1-v2.pdf
  * 
  * @author Jernej Kovacic
  * 
@@ -45,6 +47,19 @@ import java.util.*;
  */
 public class DerDecoderPrivateKey extends DerDecoder
 {
+	/*
+	 * EC domain parameter OIDs for three supported EC curves. When EC key
+	 * parameters are parsed, these values are checked to confirm that the key
+	 * belongs to the right EC curve. OIDs are picked from:
+	 *  
+	 * SEC 2: Recommended Elliptic Curve Domain Parameters
+	 * available at:
+	 * http://www.secg.org/download/aid-386/sec2_final.pdf
+	 */
+	private static final int[] NISTP256_OID = { 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07 };
+	private static final int[] NISTP384_OID = { 0x2B, 0x81, 0x04, 0x00, 0x22 };
+	private static final int[] NISTP521_OID = { 0x2B, 0x81, 0x04, 0x00, 0x23 };
+	
 	// is the decoding process completed
 	private boolean completed = false;
 	
@@ -157,6 +172,115 @@ public class DerDecoderPrivateKey extends DerDecoder
 		// will not be read and there is no check if the whole sequence has been read
 	}
 	
+	/*
+	 * Checks if two OID vectors are equal
+	 * 
+	 * @param oid - EC domain OID values, parsed from EC key data
+	 * 
+	 * @param nist - EC domain OID parameters for one of supported EC curves 
+	 * 
+	 * @return true/false
+	 */
+	private boolean compareOids(byte[] oid, int[] nist)
+	{
+		boolean retVal = true;
+		
+		// if any vector is null, return false
+		if ( null==oid || null==nist)
+		{
+			return false;
+		}
+		
+		// lengths of both vectors must be equal
+		if (oid.length != nist.length )
+		{
+			return false;
+		}
+		
+		// Compare vectors element by element. Note that one vector
+		// contains bytes and the other one integers
+		for ( int i =0; i<nist.length; i++ )
+		{
+			if ( oid[i] != (byte) (nist[i] & 0xff) )
+			{
+				retVal = false;
+				// no need to check further
+				break;  // out of for i
+			}
+		}
+		
+		return retVal;
+	}
+	
+	/*
+	 * A function to parse EC key parameters. 
+	 * It also checks EC domain parameters.
+	 * 
+	 * @throws DerException in case of invalid structure
+	 */
+	private void parseEC() throws DerException
+	{
+		// First check the version (must be 1 for EC)
+		SequenceRange verseq = parseInteger();
+				
+		if ( null==verseq )
+		{
+			throw new DerException("Version not available");
+		}
+		
+		int version = toInt(verseq);
+		if ( 1 != version )
+		{
+			throw new DerException("Invalid version for DSA key parameter structure");
+		}
+		
+		SequenceRange seq;
+		
+		// EC private key, encoded as octet string (must be converted into big int later):
+		seq = parseOctetString();
+		parameters.add(seq);
+		
+		// ECDomainParameters is an optional parameter, but OpenSSH's ssh-keygen always creates it
+		seq = parseContainer0();
+		seq = parseObject();
+		// OID values parsed from the ASN.1 object 
+		byte[] oid = toByteArray(seq);
+		int[] nist = null;
+		
+		// determine the right vector of OID values to be compared against the 'oid'
+		switch (keyType)
+		{
+		case ECDSA_NISTP256:
+			nist = NISTP256_OID;
+			break;
+			
+		case ECDSA_NISTP384:
+			nist = NISTP384_OID;
+			break;
+			
+		case ECDSA_NISTP521:
+			nist = NISTP521_OID;
+			break;
+		}
+		
+		// and finally perform the comparision
+		if ( false==compareOids(oid, nist) )
+		{
+			throw new DerException("Invalid EC domain parameters");
+		}
+		
+		
+		// EC public key, encoded as an ASN.1 bit string (must be converted to a pair of big ints later):
+		seq = parseContainer1();
+		seq = parseBitString();
+		parameters.add(seq);
+		
+		// The DER structure for EC private keys may not contain any other data
+		if ( true == moreData() )
+		{
+			throw new DerException("Invalid EC key parameter structure");
+		}
+	}
 	
 	/**
 	 * Start parsing of DER structure and prepare key parameters.
@@ -192,9 +316,17 @@ public class DerDecoderPrivateKey extends DerDecoder
 			case DSA:
 				parseDSA();
 				break;
+				
 			case RSA:
 				parseRSA();
 				break;
+				
+			case ECDSA_NISTP256:
+			case ECDSA_NISTP384:
+			case ECDSA_NISTP521:
+				parseEC();
+				break;
+				
 			default:
 				// unsupported public key type, normally should not occur, 
 				// but "handle" it anyway
@@ -228,9 +360,16 @@ public class DerDecoderPrivateKey extends DerDecoder
 	 * - Y: public key
 	 * - X: private key
 	 * 
+	 * EC keys:
+	 * - D or S: private key
+	 * - Q or W: public key
 	 * 
-	 * If key parameters are not available, null will be returned
-	 *  
+	 * If key parameters are not available, null will be returned.
+	 * 
+	 * Note: foe EC keys, the private key is returned as an octet stream and the
+	 * public key is returned as a bit string. They must be further converted into 
+	 * BigInteger(s) and passed to Java's key factories.
+	 *   
 	 * @param which - character code (case insensitive) for the key parameter
 	 * 
 	 * @return - byte array of the requested key parameter or null, if not available or if the code is unknown
@@ -246,77 +385,86 @@ public class DerDecoderPrivateKey extends DerDecoder
 			return null;
 		}
 		
-		// The actual ASN.1 integer depends on the code AND on the key type
-		// At the moment this is not a case but later, when more key types may be supported,
-		// the same code can be used by several key types.
-		// Therefore checking of a key type must be done at each case:
-		switch (which)
+		/*
+		 * The right vector of bytes to be returned depends on the char code and
+		 * also on the key type (the same char code may be present at several key types).
+		 * Nested switch'es are used to ensure better maintainabilty and for better
+		 * visibility of all combinations.
+		 */
+		switch (keyType)
 		{
-		case 'N':
-		case 'n':
-			if ( AsymmetricAlgorithm.RSA == keyType )
+		case RSA:
+			switch (which)
 			{
+			case 'N':
+			case 'n':
 				index = 0;
-			}
-			break;
-			
-		case 'E':
-		case 'e':
-			if ( AsymmetricAlgorithm.RSA == keyType )
-			{
+				break;
+				
+			case 'E':
+			case 'e':
 				index = 1;
-			}
-			break;
-			
-		case 'D':
-		case 'd':
-			if ( AsymmetricAlgorithm.RSA == keyType )
-			{
+				break;
+				
+			case 'D':
+			case 'd':
 				index = 2;
+				break;
 			}
 			break;
 			
-		case 'P':
-		case 'p':
-			if ( AsymmetricAlgorithm.DSA == keyType )
+		case DSA:
+			switch (which)
 			{
+			case 'P':
+			case 'p':
 				index = 0;
-			}
-			break;
-			
-		case 'Q':
-		case 'q':
-			if ( AsymmetricAlgorithm.DSA == keyType )
-			{
+				break;
+				
+			case 'Q':
+			case 'q':
 				index = 1;
-			}
-			break;
-			
-		case 'G':
-		case 'g':
-			if ( AsymmetricAlgorithm.DSA == keyType )
-			{
+				break;
+				
+			case 'G':
+			case 'g':
 				index = 2;
-			}
-			break;
-			
-		case 'Y':
-		case 'y':
-			if ( AsymmetricAlgorithm.DSA == keyType )
-			{
+				break;
+				
+			case 'Y':
+			case 'y':
 				index = 3;
+				break;
+				
+			case 'X':
+			case 'x':
+				index = 4;
+				break;
 			}
 			break;
 			
-		case 'X':
-		case 'x':
-			if ( AsymmetricAlgorithm.DSA == keyType )
+		case ECDSA_NISTP256:
+		case ECDSA_NISTP384:
+		case ECDSA_NISTP521:
+			switch (which)
 			{
-				index = 4;
+			case 'D':
+			case 'd':
+			case 'S':
+			case 's':
+				index = 0;
+				break;
+				
+			case 'Q':
+			case 'q':
+			case 'W':
+			case 'w':
+				index = 1;
+				break;
 			}
 			break;
 		}
-		
+				
 		if ( index<0 || index>=parameters.size() )
 		{
 			return null;
@@ -365,7 +513,7 @@ public class DerDecoderPrivateKey extends DerDecoder
 	
 	
 	/*
-	 * Unit testing function that parses two key structures (one RSA and one DSA)
+	 * Unit testing function that parses three key structures (one RSA, one for DSA and one for EC)
 	 */
 	public static void main(String[] args)
 	{
@@ -402,37 +550,22 @@ public class DerDecoderPrivateKey extends DerDecoder
 				"72jnWwY0r8bi7131ITbE" ).toCharArray()
 				);
 		
-		// 2048-bit DSA key
-		byte[] dsa2048key = Base64.decode(
-			  ( "MIIDTgIBAAKCAQEA4+C7Aiv8I7wxc+R1emaTmTs0UTsBA9VRpqLaUY31tckXfQUX" +
-				"aVdfPpnhOe2vbjH3aeSwzO7QZxOgb1TNq0n9UtLjiUAKbwU+7K7PRqyBm9U3X5ju" +
-				"hsHGpm/NqVPRKDiRB65xH4nXcOvHHxxEcHDAPGTVfywxzet08HGDcPNp+lPIBozQ" +
-				"VK0GbqM7sO4dAcFbUoVMBckgy4AHfLubL8S1gne7mjkZ12pvioCuGBiZrh5tG2iq" +
-				"eBiNfmnagrcBMMbGfqYJAurFAXrhERUVE0NZZwK4swr2O1Rzmt0gx/wPzAyuoJ2t" +
-				"X4LlMUEA5k8AQl81AgBHZoofM4MW58C87QNK6QIdAvhb4UTOOJ89C9w/71JARv63" +
-				"Pyc6pK40/yw3NDECggEBAIRn5YAul6RNbr0i8MLxGK48Mxy0p/aFfESluJhoStUz" +
-				"7y99Hd2rQ77u3k77+JFI4tO05q40hBO/GX/C8brIenKOBsseFMsKftwMmnNSOqkb" +
-				"UEeE8/zG533C/SOEMOA242DZsCEFuhHN6Bq1AzBTlC0HjGCxYaALbhkz2C2EyI+f" +
-				"TGEjkHm3DxX0Jc/GcVSRgGEs5BcbMPxzKxdR1sCNrvJslqxpkQkHLHtdsgHXD4Jg" +
-				"zTK4bsW7bXo9Cop3bYuFyw8fSKjw7hNwuO51fS3em0FtqGOiEy9dPsrx3H2MfZHq" +
-				"CLMJl/TBiwTfysBo2fD6EpSdajBDBo3sMJCLB2iwTXcCggEAQBH+YUS0cid3pZz3" +
-				"6kQf3ftVgHYOuK+CVtZMRvEQfMp5iDDUhRFeMryakyBCjWscAA2uWU5C67EM59lk" +
-				"SgUoE7xpoWDYlrVAR0vDjfYwjDkWEka9rOvFEmdnFnKr1KQ1EcXQgVtuaS70G5V3" +
-				"d6+j8px5/E0lX6qzvkJaJqWWJaK6sXL6e29pVklUbTJdegAjcrhhRHNQCJ0LHJdJ" +
-				"wrV52zM3tDIvLfc/wRJEkfKFrbV8Gm/f0XYTnCa+IQqBSZ21+kN+8MwreOhhlfwm" +
-				"8/jgitu3CHFXshaMSHdo7mdw7lPJxqxAxUiRTmCDPzxT4hbG4fqTo9rB7ARaSHB2" +
-				"tSgy2QIcazufaFUIvPxwslshi62JXK6ec8cE28pd7+GvlQ==" ).toCharArray()
+		// EC nistp256 key
+		byte[] eckey = Base64.decode(
+			  (  "MHcCAQEEIL0iyu/0AkFfyUagMdnY1JqI8SZNCMC+5tTIMsbDVrGFoAoGCCqGSM49" +
+				 "AwEHoUQDQgAEWHFOnezz1vnkbhzpyU/wtSpY9DiEtB5BDSOiIWOkngcTnSS67ncd" +
+				 "uNVU/DEkTWMIpzvjHFeb6gz5y+Vpaen5Dw==" ).toCharArray()
 				);
 		
 		// initialize one decoder for each key
 		DerDecoderPrivateKey rsaengine = new DerDecoderPrivateKey(AsymmetricAlgorithm.RSA, rsakey);
 		DerDecoderPrivateKey dsaengine = new DerDecoderPrivateKey(AsymmetricAlgorithm.DSA, dsakey);
-		DerDecoderPrivateKey dsa2048engine = new DerDecoderPrivateKey(AsymmetricAlgorithm.DSA, dsa2048key);
+		DerDecoderPrivateKey ecengine = new DerDecoderPrivateKey(AsymmetricAlgorithm.ECDSA_NISTP256, eckey);
 		
 		// start parsing
 		rsaengine.parse();
 		dsaengine.parse();
-		dsa2048engine.parse();
+		ecengine.parse();
 		
 		// check success of parsing
 		if ( false==rsaengine.ready() )
@@ -447,9 +580,9 @@ public class DerDecoderPrivateKey extends DerDecoder
 			System.exit(-1);
 		}
 		
-		if ( false==dsa2048engine.ready() )
+		if ( false==ecengine.ready() )
 		{
-			System.err.println("DSA parse failed");
+			System.err.println("EC parse failed");
 			System.exit(-1);
 		}
 		
@@ -476,16 +609,10 @@ public class DerDecoderPrivateKey extends DerDecoder
 		System.out.println("X: " + x.length + " bytes");
 		System.out.println();
 		
-		p = dsa2048engine.get('p');
-		q = dsa2048engine.get('q');
-		g = dsa2048engine.get('g');
-		y = dsa2048engine.get('y');
-		x = dsa2048engine.get('x');
+		byte[] s = ecengine.get('d');
+		byte[] w = ecengine.get('q');
 		
-		System.out.println("P: " + p.length + " bytes");
-		System.out.println("Q: " + q.length + " bytes");
-		System.out.println("G: " + g.length + " bytes");
-		System.out.println("Y: " + y.length + " bytes");
-		System.out.println("X: " + x.length + " bytes");
+		System.out.println("d: " + s.length + " bytes");
+		System.out.println("Q: " + w.length + " bytes");
 	}
 }

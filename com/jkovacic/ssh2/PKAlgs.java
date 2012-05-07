@@ -33,7 +33,10 @@ import com.jkovacic.cryptoutil.*;
 public enum PKAlgs implements ISshEncryptionAlgorithmFamily, ISshMarshalledAlgorithm
 {
 	DSA("ssh-dss", AsymmetricAlgorithm.DSA),
-	RSA("ssh-rsa", AsymmetricAlgorithm.RSA) ;
+	RSA("ssh-rsa", AsymmetricAlgorithm.RSA),
+	ECDSA_NISTP256("ecdsa-sha2-nistp256", AsymmetricAlgorithm.ECDSA_NISTP256),
+	ECDSA_NISTP384("ecdsa-sha2-nistp384", AsymmetricAlgorithm.ECDSA_NISTP384),
+	ECDSA_NISTP521("ecdsa-sha2-nistp521", AsymmetricAlgorithm.ECDSA_NISTP521);
 	
 	private String name;
 	
