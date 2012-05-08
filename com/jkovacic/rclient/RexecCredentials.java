@@ -16,6 +16,8 @@ limitations under the License.
 
 package com.jkovacic.rclient;
 
+import java.util.*;
+
 /**
  * A class with necessary credentials to authenticate on a remote host
  * to perform a remote execution via rexec service.
@@ -81,16 +83,9 @@ public class RexecCredentials extends RCredentials
 	 */
 	public void overwritePassword()
 	{
-		// does the array of password chars exist?
-		if ( null == password )
+		if ( null != password )
 		{
-			return;
-		}
-		
-		// overwrite each character with a "zero" char
-		for ( int i=0; i<password.length; i++ )
-		{
-			password[i] = '\u0000';
+			Arrays.fill(password, '\u0000');
 		}
 	}
 	

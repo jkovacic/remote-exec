@@ -20,7 +20,9 @@ import java.io.*;
 
 /**
  * Interface with declaration of methods that must be implemented by
- * CLI processing classes.
+ * CLI processing classes. Specialized classes can implement this interface,
+ * performing additional filtering of the output, interactive managing
+ * of the remote process, etc.
  * 
  * @author Jernej Kovacic
  */

@@ -121,6 +121,8 @@ public class SshFormatter
 		byte[] retVal = new byte[4];
 		int l = a;
 		
+		Arrays.fill(retVal, (byte) 0);
+		
 		// using bitwise operators extract the least significant byte from the integer value,
 		// put the byte's value into the appropriate position of the output array,
 		// and move the intger value 8 bits to right (equivalent to division by 256)
@@ -132,42 +134,7 @@ public class SshFormatter
 		
 		return retVal;
 	}
-	
-	/*
-	 * An equivalent to "good old C" function "memcpy".
-	 * Range control is implemented, so the function read out of
-	 * src's range and will not attempt to write out of dest's range.
-	 * 
-	 * In case of invalid input parameters, nothing will be copied.
-	 * 
-	 * @param dest - array where src will be copied to
-	 * @param src - array to be copied to dest
-	 * @param pos - starting position inside dest, where src willbe copied to
-	 */
-	private void copyBytes(byte[] dest, byte[] src, int pos)
-	{
-		// check of input parameters
-		if ( null==dest || null==src )
-		{
-			return;
-		}
 		
-		// adjust the pos if necessary
-		int loc = ( pos<0 ? 0 : pos );
-		
-		// and finally copy the src byte by byte.
-		for ( int i=0; i<src.length; i++ )
-		{
-			// range checking
-			if ( (loc+i)>=dest.length )
-			{
-				break;
-			}
-			
-			dest[loc+i] = src[i];
-		}
-	}
-	
 	/**
 	 * Format the previously added vectors into the SSH message compliant format 
 	 * 
@@ -186,17 +153,18 @@ public class SshFormatter
 		}
 		
 		byte[] retVal = new byte[len];
+		Arrays.fill(retVal, (byte) 0);
 		// current position of retVal, must be updated after each append
 		int pos = 0;
 		
 		for ( byte[] b : vectors )
 		{
 			// Append the vector's length first
-			copyBytes(retVal, intToBytes(b.length), pos);
+			System.arraycopy(intToBytes(b.length), 0, retVal, pos, 4);
 			// update the pos
 			pos += 4;
 			// append the actual vector
-			copyBytes(retVal, b, pos);
+			System.arraycopy(b, 0, retVal, pos, b.length);
 			// and update the pos again
 			pos += b.length;
 		}

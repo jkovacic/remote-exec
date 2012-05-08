@@ -16,7 +16,7 @@ limitations under the License.
 
 package com.jkovacic.ssh2;
 
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * Abstract class with user authentication data. Details depend on 

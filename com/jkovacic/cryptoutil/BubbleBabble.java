@@ -16,6 +16,8 @@ limitations under the License.
 
 package com.jkovacic.cryptoutil;
 
+import java.util.*;
+
 
 /**
  * A class with implementation of a bubble - babble encoding.
@@ -41,28 +43,7 @@ public class BubbleBabble
 	// result for an empty input
 	private static final char[] EMPTY_INPUT = "xexax".toCharArray();
 	
-	/*
-	 * A Java clone of a good old C memcpy
-	 * 
-	 * Note that the appropriate amount of memory in dest must be allocated beforehand,
-	 * otherwise an ArrayIndexOutOfBoundsException may be thrown.
-	 * Additionally, nr. must not be longer than src.length.
-	 * As this is a private function, it is assumed that all above mentioned checking is
-	 * performed by the calling function.
-	 *  
-	 * @param dest - a reference to the destination array
-	 * @param pos - position of the dest where to start writing
-	 * @param src - an array to be copied into dest
-	 * @param nr - number of characters to be copied (src may be longer than nr)
-	 */
-	private static void memcpy(char[] dest, int pos, char[] src, int nr)
-	{
-		for ( int i=0; i<nr; i++ )
-		{
-			dest[pos+i] = src[i];
-		}
-	}
-	
+
 	/**
 	 * Calculates a bubble - babble encoding of the input blob
 	 * 
@@ -90,6 +71,7 @@ public class BubbleBabble
 		*/
 		
 		char[] retVal = new char[6 * (blob.length/2) + 5];
+		Arrays.fill(retVal, '\u0000');
 		
 		// auxiliary string for a 5 letter "word" and a dash
 		char [] auxstr = new char[6];
@@ -109,7 +91,7 @@ public class BubbleBabble
 	    		auxstr[0] = VOWELS[seed%6];
 	            auxstr[1] = CONSONANTS[16];
 	            auxstr[2] = VOWELS[seed/6];
-	            memcpy(retVal, pos , auxstr, 3);
+	            System.arraycopy(auxstr, 0, retVal, pos, 3);
 	            pos += 3;
 	            break;  // out of for i
 	    	}
@@ -122,7 +104,7 @@ public class BubbleBabble
 	        
 	        if ( i+1 >= blob.length )
 	        {
-	            memcpy(retVal, pos, auxstr, 3);
+	        	System.arraycopy(auxstr, 0, retVal, pos, 3);
 	            pos += 3;
 	            break;  // out of for i
 	        }
@@ -131,7 +113,7 @@ public class BubbleBabble
 	        auxstr[3] = CONSONANTS[(byte2>>4)&15];
 	        auxstr[4] = '-';
 	        auxstr[5] = CONSONANTS[byte2&15];
-	        memcpy(retVal, pos, auxstr, 6);
+	        System.arraycopy(auxstr, 0, retVal, pos, 6);
 	        pos += 6;
 	        seed = (seed*5 + byte1*7 + byte2)%36;
 	    }  // for i 
