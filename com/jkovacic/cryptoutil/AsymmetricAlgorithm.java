@@ -29,9 +29,9 @@ public enum AsymmetricAlgorithm implements IEncryptionAlgorithmFamily
 {
 	DSA("DSA"),
 	RSA("RSA"),
-	ECDSA_NISTP256("ECDSA-P256"),
-	ECDSA_NISTP384("ECDSA-P384"),
-	ECDSA_NISTP521("ECDSA-P521");
+	ECDSA_NISTP256("ECDSA"),
+	ECDSA_NISTP384("ECDSA"),
+	ECDSA_NISTP521("ECDSA");
 	
 	private String desc = null;
 	

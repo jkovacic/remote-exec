@@ -25,7 +25,7 @@ import java.math.*;
  * A convenience asymmetric key pair handling class. It can be used to 
  * generate keys from their parameters, store keypairs etc.
  * 
- * Currently only DSA and RSA are supported.
+ * Currently, RSA, DSA and ECDSA are supported.
  * 
  * @author Jernej Kovacic
  */
@@ -56,7 +56,7 @@ public class KeyCreator
 	 */
 	public static KeyCreator createRSAinstance(byte[] n, byte[] e, byte[] d)
 	{
-		// check of input parameters
+		// sanity check
 		if ( null==n || null==e || null == d ||
 			 0==n.length || 0==e.length || 0==d.length	)
 		{
@@ -67,7 +67,7 @@ public class KeyCreator
 		try
 		{
 			// instantiate a RSA factory, ...
-			factory = KeyFactory.getInstance("RSA");	
+			factory = KeyFactory.getInstance(AsymmetricAlgorithm.RSA.getName());	
 		}
 		catch ( NoSuchAlgorithmException ex )
 		{
@@ -112,7 +112,7 @@ public class KeyCreator
 	}
 	
 	/**
-	 * Create a RSA key pair by passing key parameters
+	 * Create a DSA key pair by passing key parameters
 	 * 
 	 * @param p - prime
 	 * @param q - sub prime
@@ -124,7 +124,7 @@ public class KeyCreator
 	 */
 	public static KeyCreator createDSAinstance(byte[] p, byte[] q, byte[] g, byte[] y, byte[] x)
 	{
-		// check of input parameters
+		// sanity check
 		if ( null==p || null==q || null==g || null==y || null==x ||
 			 0==p.length || 0==q.length || 0==g.length || 0==y.length || 0==x.length )
 		{
@@ -135,7 +135,7 @@ public class KeyCreator
 		try
 		{
 			// instantiate a DSA factory, ...
-			factory = KeyFactory.getInstance("DSA");	
+			factory = KeyFactory.getInstance(AsymmetricAlgorithm.DSA.getName());	
 		}
 		catch ( NoSuchAlgorithmException ex )
 		{
@@ -181,9 +181,100 @@ public class KeyCreator
 		return kc;
 	}
 		
+	
+	/**
+	 * Create an EC key pair by passing key parameters
+	 * 
+	 * @param alg - key type (specifying the EC domain parameters)
+	 * @param q - public key (as a bit string)
+	 * @param d - private key (as an octet string)
+	 * 
+	 * @return an instance of an EC key or null if invalid parameters
+	 */
+	public static KeyCreator createECinstance(AsymmetricAlgorithm alg, byte[] q, byte[] d)
+	{
+		// sanity check
+		if ( null==alg || null==q || null==d ||
+				0==q.length || 0==d.length )
+		{
+			return null;
+		}
+		
+		switch (alg)
+		{
+		case ECDSA_NISTP256:
+		case ECDSA_NISTP384:
+		case ECDSA_NISTP521:
+			// algorithm type is correct, nothing actually to do inside this switch
+			break;
+			
+		default:
+			// unsupported algorithm or EC domain
+			return null;
+		}
+		
+		KeyFactory factory = null;
+		try
+		{
+			// instantiate an EC factory, ...
+			factory = KeyFactory.getInstance("EC");
+		}
+		catch ( NoSuchAlgorithmException ex )
+		{
+			return null;
+		}
+		
+		// ...convert parameters to appropriate classes, ...
+		BigInteger sint = EcUtil.octetStringToInteger(d);  // private key
+		ECPoint  wpoint = EcUtil.octetStringToEcPoint(alg, q);  // public key
+		ECParameterSpec spec = EcUtil.getSpec(alg);		// EC specifications
+		
+		if ( null==sint || null==wpoint || null== spec )
+		{
+			return null;
+		}
+		
+		// validate the public key:
+		if ( false == EcUtil.validPublicKey(alg, wpoint) )
+		{
+			return null;
+		}
+		
+		// ...assign keys' specifications, ...
+		KeySpec privspec = new ECPrivateKeySpec(sint, spec);
+		KeySpec pubspec = new ECPublicKeySpec(wpoint, spec);
+		
+		PrivateKey prvk = null;
+		PublicKey pubk = null;
+
+		try
+		{
+			// ...and finally generate the keys
+			prvk = factory.generatePrivate(privspec);
+			pubk = factory.generatePublic(pubspec);
+		}
+		catch ( InvalidKeySpecException ex )
+		{
+			return null;
+		}
+
+		if ( null==prvk || null==pubk )
+		{
+			return null;
+		}
+
+		// key creation successful, assign the class's properties
+		KeyCreator kc = new KeyCreator();
+		kc.pktype = alg;
+		kc.prvkey = prvk;
+		kc.pubkey = pubk;
+
+		return kc;
+	}
+	
 	/**
 	 * Creates a key pair (any of supported public asymmetric algorithms) by
-	 * passing a public and its corresponding private key.
+	 * passing a public and its corresponding private key. 
 	 * 
 	 * @param pubKey - public key
 	 * @param privKey - private key
@@ -192,7 +283,7 @@ public class KeyCreator
 	 */
 	public static KeyCreator createFromKeys(PublicKey pubKey, PrivateKey privKey)
 	{
-		// check of input parameters
+		// sanity check
 		if ( null==pubKey || null==privKey )
 		{
 			return null;
@@ -201,13 +292,14 @@ public class KeyCreator
 		// Check if keys belong to the same encryption algorithm
 		if (
 			( (pubKey instanceof RSAPublicKey) && !(privKey instanceof RSAPrivateKey) ) ||
-			( (pubKey instanceof DSAPublicKey) && !(privKey instanceof DSAPrivateKey) )
+			( (pubKey instanceof DSAPublicKey) && !(privKey instanceof DSAPrivateKey) ) ||
+			( (pubKey instanceof ECPublicKey)  && !(privKey instanceof ECPrivateKey) )
 			)
 		{
 			return null;
 		}
-				
-		AsymmetricAlgorithm alg;
+		
+		AsymmetricAlgorithm alg = null;
 		// check if encryption algorithm is supported and assign the key type
 		if ( privKey instanceof RSAPrivateKey )
 		{
@@ -217,11 +309,53 @@ public class KeyCreator
 		{
 			alg = AsymmetricAlgorithm.DSA;
 		}
+		else if ( privKey instanceof ECPrivateKey)
+		{
+			ECPublicKey ecPubKey = (ECPublicKey) pubKey;
+			ECPrivateKey ecPrivKey = (ECPrivateKey) privKey;
+			ECParameterSpec spec = ecPubKey.getParams();
+						
+			// Are both keys of the same EC domain?
+			if ( false == spec.equals(ecPrivKey.getParams()) )
+			{
+				return null;
+			}
+			
+			// EC domain must be one of the supported ones:
+			if ( spec.equals(EcUtil.getSpec(AsymmetricAlgorithm.ECDSA_NISTP256)) )
+			{
+				alg = AsymmetricAlgorithm.ECDSA_NISTP256;
+			}
+			else if ( spec.equals(EcUtil.getSpec(AsymmetricAlgorithm.ECDSA_NISTP384)) )
+			{
+				alg = AsymmetricAlgorithm.ECDSA_NISTP384;
+			}
+			else if ( spec.equals(EcUtil.getSpec(AsymmetricAlgorithm.ECDSA_NISTP521)) )
+			{
+				alg = AsymmetricAlgorithm.ECDSA_NISTP521;
+			}
+			else
+			{
+				return null;
+			}
+			
+			// check validity of the public key
+			if ( false == EcUtil.validPublicKey(alg, ecPubKey.getW()) )
+			{
+				return null;
+			}
+		} // if ECPrivateKey
 		else
 		{
 			return null;
 		}
 			
+		// just in case..
+		if ( null == alg )
+		{
+			return null;
+		}
+		
 		// keys are OK, assign the class's properties
 		KeyCreator kc = new KeyCreator();
 		kc.prvkey = privKey;
@@ -230,9 +364,9 @@ public class KeyCreator
 		
 		return kc;
 	}
-
+	
 	/**
-	 * Creates a key pair by passing a KeyPair structure
+	 * Creates a key pair by passing a KeyPair structure.
 	 * 
 	 * @param pair - key pair
 	 * 
@@ -240,12 +374,12 @@ public class KeyCreator
 	 */
 	public static KeyCreator createFromKeypair(KeyPair pair)
 	{
-		// check of input parameters
+		// sanity check
 		if ( null==pair )
 		{
 			return null;
 		}
-		
+				
 		// derive both keys from the key pair and pass them to createFromKeys()
 		return createFromKeys(pair.getPublic(), pair.getPrivate());
 	}

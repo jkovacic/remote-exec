@@ -35,8 +35,9 @@ import java.security.*;
  * - Check success of signing by calling signatureReady()
  * - If the signature process is successful, the signature is available by calling getSignature() 
  * 
- * Note: at the moment, only SHA-1 with RSA or DSA digital signatures are supported.
- * It is easy to extend the class and support other algorithms and their combinations.
+ * Note: unless additional limitations are imposed by the crypto provider, at the moment any combination of
+ * SHA-1, SHA-256, SHA-384, SHA-512 with RSA, DSA or ECDSA is principally supported.
+ * It is simple to extend the class and support other algorithms and their combinations.
  * 
  * @author Jernej Kovacic
  */
@@ -72,7 +73,7 @@ public class Signer
 	
 	/**
 	 * A factory that instantiates an instance of this class and specifies
-	 * the digest algorithm. At the moment only SHA-1 is supported
+	 * the digest algorithm.
 	 * 
 	 * @param hashalg - digest algorithm
 	 * 
@@ -88,11 +89,8 @@ public class Signer
 			throw new SignerException("Unspecified signature algorithms");
 		}
 		
-		// is it among supported ones? (currently only SHA-1 is supported)
-		if ( DigestAlgorithm.SHA1 != hashalg )
-		{
-			throw new SignerException("Unsupported signature algorithms");
-		}
+		// TODO: to check whether hashalg is among "officially" supported ones?
+		// (at the moment SHA-1, SHA-256, SHA-384 and SHA-512 are supported)
 		
 		return new Signer(hashalg);
 	}
@@ -151,33 +149,50 @@ public class Signer
 			throw new SignerException("Key not generated yet");
 		}
 		
-		// check of input parameters
+		// sanity check
 		if ( null == data )
 		{
 			throw new SignerException("Nothing to sign");
 		}
 		
-		// check if combination of algorithms is supported
-		// and prepare a definition for the Signature factory
+		// Prepare a definition for the Signature factory
+		// Note: crypto provider might not support all combinations,
+		// in that case an exception will be thrown later by a Signature factory.
 		String siginitspec = null;
 		
-		// SHA-1 and DSA
-		if ( DigestAlgorithm.SHA1==hashtype && AsymmetricAlgorithm.DSA==kc.getType() )
+		// when specifying a Signature init string, the digest part is slightly different
+		// (without hyphens) than when specifying a digest algorithm itself.
+		switch (hashtype)
 		{
-			siginitspec = "SHA1withDSA";
+		case SHA1:
+			siginitspec = "SHA1with" +kc.getType().getName();
+			break;
+			
+		case SHA256:
+			siginitspec = "SHA256with" +kc.getType().getName();
+			break;
+			
+		case SHA384:
+			siginitspec = "SHA384with" + kc.getType().getName();
+			break;
+			
+		case SHA512:
+			siginitspec = "SHA512with" + kc.getType().getName();
+			break;
+			
+		default:
+			throw new SignerException("Unsupported digest agorithm");
 		}
 		
-		// SHA-1 and RSA
-		if ( DigestAlgorithm.SHA1==hashtype && AsymmetricAlgorithm.RSA==kc.getType() )
-		{
-			siginitspec = "SHA1withRSA";
-		}
 		
+		// currently a redundant piece of code, might still be useful some day
+		/*
 		// other combinations are currently not supported
 		if ( null==siginitspec )
 		{
 			throw new SignerException("Unsupported combination of signature algorithms");
 		}
+		*/
 		
 		Signature sigctx = null;
 		try

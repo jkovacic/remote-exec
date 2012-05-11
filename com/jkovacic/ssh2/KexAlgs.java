@@ -32,7 +32,10 @@ public enum KexAlgs implements ISshEncryptionAlgorithmFamily
 	DHG1_SHA1("diffie-hellman-group1-sha1"),
 	DHG14_SHA1("diffie-hellman-group14-sha1"),
 	DHGEX_SHA1("diffie-hellman-group-exchange-sha1"),
-	DHGEX_SHA256("diffie-hellman-group-exchange-sha256");
+	DHGEX_SHA256("diffie-hellman-group-exchange-sha256"),
+	ECDH_NISTP256("ecdh-sha2-nistp256"),
+	ECDH_NISTP384("ecdh-sha2-nistp384"),
+	ECDH_NISTP521("ecdh-sha2-nistp521");
 	
 	private String name;
 	

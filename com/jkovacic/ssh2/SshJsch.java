@@ -351,7 +351,7 @@ public final class SshJsch extends Ssh2
 	{
 		CliOutput retVal = null;
 		
-		// check of input parameters
+		// sanity check
 		if ( null == command || 0 == command.length() )
 		{
 			throw new SshException("No command specified");
@@ -603,48 +603,10 @@ public final class SshJsch extends Ssh2
 				return;
 			}
 			
-			// A utility class for preparation of public key blobs
-			SshFormatter pubkeyForm = new SshFormatter();
+			pubkey = SshSignerHandler.preparePublic(method, decoder);
+			kc = SshSignerHandler.preparePrivate(method, decoder);
 			
-			// Prepare key pairs for signing and public key blobs
-			switch (method)
-			{
-			case RSA:
-				kc = KeyCreator.createRSAinstance(
-						decoder.get('n'), 
-						decoder.get('e'), 
-						decoder.get('d') );
-				
-				pubkeyForm.add(method.getName());
-				pubkeyForm.add(decoder.get('e'));
-				pubkeyForm.add(decoder.get('n'));
-				pubkey = pubkeyForm.format();
-				
-				break;
-				
-			case DSA:
-				kc = KeyCreator.createDSAinstance(
-						decoder.get('p'), 
-						decoder.get('q'), 
-						decoder.get('g'), 
-						decoder.get('y'), 
-						decoder.get('x') );
-				
-				pubkeyForm.add(method.getName());
-				pubkeyForm.add(decoder.get('p'));
-				pubkeyForm.add(decoder.get('q'));
-				pubkeyForm.add(decoder.get('g'));
-				pubkeyForm.add(decoder.get('y'));
-				pubkey = pubkeyForm.format();
-				
-				break;
-				
-			default:
-				// Unsupported encryption algorithm.
-				// Nothing really to do here as keys have not
-				// been prepared anyway, later resulting in authentication failure
-				return;
-			}
+			// checking of key assigning success? Not necessary right now
 		}
 		
 		/*
@@ -675,68 +637,11 @@ public final class SshJsch extends Ssh2
 		 * See RFC 4253, Section 6.6 for more information:
 		 * http://tools.ietf.org/html/rfc4253#section-6.6
 		 * 
-		 * Currently only SHA-1 with RSA or DSA is supported.
-		 * 
 		 * @return digital signature, ready to be sent to a SSH server
 		 */
 		public byte[] getSignature(byte[] data)
 		{
-			byte[] retVal = null;
-			try
-			{
-				// Prepare a signature using Signer
-				Signer sig = Signer.getInstance(DigestAlgorithm.SHA1);
-				sig.passKey(kc);
-				sig.sign(data);
-				
-				if ( false == sig.signatureReady() )
-				{
-					// if signing was unsuccessful just return null (i.e. no signature)
-					// which will result in an authentication failure
-					return null;
-				}
-				
-				// Prepare a signature blob as required by theSSH standard: RFC 4253, Section 6.6:
-				// http://tools.ietf.org/html/rfc4253#section-6.6
-				
-				// regardless of the key type, the blob will start with the algorithm name
-				SshFormatter form = new SshFormatter();
-				form.add(method.getName());
-				switch (method)
-				{
-				case RSA:
-					// RSA signature format is already SSH standard compliant
-					form.add(sig.getSignature());
-					break;
-					
-				case DSA:
-				{
-					// DSA signature format, returned by Java cryptography providers (and Signer),
-					// is ASN.1. However, SSH standard requires it to be converted to IEEE P1363 format.
-					// This is implemented by DsaSignatureAdapter.
-					DsaSignatureAdapter conv = new DsaSignatureAdapter(sig.getSignature());
-					conv.convert();
-					// if signing failed, null will be returned, later resulting in an authentication failure
-					form.add(conv.getSshsignature());
-					break;
-				}
-				
-				default:
-					// unsupported key type, return null which will later result in
-					// an authentication failure.
-					return null;
-				}
-				
-				// Signing and (possibly) conversion were successful, format the signature blob
-				retVal = form.format();
-			}
-			catch ( SignerException ex )
-			{
-				retVal = null;
-			}
-			
-			
-			return retVal;
+			return SshSignerHandler.getSignature(kc, data);
 		}
 		
 		/*
