@@ -273,7 +273,23 @@ public final class SshJsch extends Ssh2
 				
 				// addInternalIdentity()
 				
+				// check if the algorithm is supported
+				// (just in case if an unsupported algorithm is inserted into PKAlgs)
 				UserCredentialsPrivateKey pkinst = (UserCredentialsPrivateKey) user;
+				switch (pkinst.getMethod())
+				{
+				case RSA:
+				case DSA:
+				case ECDSA_NISTP256:
+				case ECDSA_NISTP384:
+				case ECDSA_NISTP521:
+					// supported, nothing really to do
+					break;
+					
+				default:
+					throw new SshException("Unsupported public key authentication algorithm");
+				}
+				
 				jschcontext.addIdentity(
 						new AuthBlobSigner(pkinst.getMethod(), pkinst.getSecret()), 
 						null);

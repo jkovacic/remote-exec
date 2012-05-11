@@ -142,16 +142,22 @@ public final class SshGanymed extends Ssh2
 		// GanymedSSH2 requires a PEM encoded private key.
 		// Class Base64 has all appropriate functionality to prepare it.
 		
-		// First prepare an appropriate header and footer 
-		if ( PKAlgs.DSA == user.getMethod() )
+		// First check if the algorithm is supported and 
+		// prepare the appropriate header and footer
+		switch (user.getMethod())
 		{
+		case DSA:
 			header = "-----BEGIN DSA PRIVATE KEY-----";
 			footer = "-----END DSA PRIVATE KEY-----";
-		}
-		else
-		{
+			break;
+			
+		case RSA:
 			header = "-----BEGIN RSA PRIVATE KEY-----";
 			footer = "-----END RSA PRIVATE KEY-----";
+			break;
+			
+		default:
+			throw new IOException("Unsupported public key algorithm");
 		}
 		
 		// ... and prepare a PEM structure.
