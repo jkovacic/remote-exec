@@ -108,7 +108,7 @@ public final class SshGanymed extends Ssh2
 		
 		// Least we can do is to use StringBuffer (which is mutable)
 		// and override its characters as soon as not needed anymore.
-		StringBuffer password = new StringBuffer(user.secret.length);
+		StringBuilder password = new StringBuilder(user.secret.length);
 		
 		// copy password characters into a String buffer
 		for ( byte b : user.secret )
