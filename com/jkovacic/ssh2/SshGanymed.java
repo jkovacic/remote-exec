@@ -101,6 +101,8 @@ public final class SshGanymed extends Ssh2
 	 */
 	private boolean authenticate(UserCredentialsPassword user) throws IOException
 	{
+		// the exception that will be thrown if necessary
+		IOException exthr = null;
 		
 		// GanymedSSH2 requires a password as a String.
 		// However, String is immutable so it is not possible to 
@@ -110,19 +112,37 @@ public final class SshGanymed extends Ssh2
 		// and override its characters as soon as not needed anymore.
 		StringBuilder password = new StringBuilder(user.secret.length);
 		
-		// copy password characters into a String buffer
-		for ( byte b : user.secret )
-		{
-			password.append((char) b);
-		}
-
-		// And attempt to authenticate
-		boolean authSucc = sshconn.authenticateWithPassword(user.username, password.toString());
+		// authentication successful?
+		boolean authSucc = false;
 		
-		// before proceeding override the password with 'zero' characters
-		for ( int i=0; i<user.secret.length; i++ )
+		try
 		{
-			password.setCharAt(i, '\u0000');
+			// copy password characters into a String buffer
+			for ( byte b : user.secret )
+			{
+				password.append((char) b);
+			}
+
+			// And attempt to authenticate
+			authSucc = sshconn.authenticateWithPassword(user.username, password.toString());
+		}
+		catch ( IOException ex )
+		{
+			exthr = ex;
+		}
+		finally
+		{
+			// before proceeding override the password with 'zero' characters
+			for ( int i=0; i<user.secret.length; i++ )
+			{
+				password.setCharAt(i, '\u0000');
+			}
+		}
+		
+		// Has an exception been intercepted? Rethrow it
+		if ( null!=exthr )
+		{
+			throw exthr;
 		}
 		
 		// and return the authentication success
@@ -139,36 +159,61 @@ public final class SshGanymed extends Ssh2
 		String header = null;
 		String footer = null;
 		
-		// GanymedSSH2 requires a PEM encoded private key.
-		// Class Base64 has all appropriate functionality to prepare it.
+		// the exception that will be thrown if necessary
+		IOException exthr = null;
+		// authentication successful?
+		boolean authSucc = false;
+		// storage for private key
+		char[] pem = null;
 		
-		// First check if the algorithm is supported and 
-		// prepare the appropriate header and footer
-		switch (user.getMethod())
+		try
 		{
-		case DSA:
-			header = "-----BEGIN DSA PRIVATE KEY-----";
-			footer = "-----END DSA PRIVATE KEY-----";
-			break;
+			// GanymedSSH2 requires a PEM encoded private key.
+			// Class Base64 has all appropriate functionality to prepare it.
+		
+			// First check if the algorithm is supported and 
+			// prepare the appropriate header and footer
+			switch (user.getMethod())
+			{
+			case DSA:
+				header = "-----BEGIN DSA PRIVATE KEY-----";
+				footer = "-----END DSA PRIVATE KEY-----";
+				break;
+				
+			case RSA:
+				header = "-----BEGIN RSA PRIVATE KEY-----";
+				footer = "-----END RSA PRIVATE KEY-----";
+				break;
+				
+			default:
+				throw new IOException("Unsupported public key algorithm");
+			}
+		
+			// ... and prepare a PEM structure.
+			// Note that the library is flexible about the line length and line separators
+			pem = Base64.encode(user.secret, 64, "\n", header, footer);
 			
-		case RSA:
-			header = "-----BEGIN RSA PRIVATE KEY-----";
-			footer = "-----END RSA PRIVATE KEY-----";
-			break;
-			
-		default:
-			throw new IOException("Unsupported public key algorithm");
+			// And attempt to authenticate
+			authSucc = sshconn.authenticateWithPublicKey(user.username, pem, null);
+		}
+		catch ( IOException ex )
+		{
+			exthr = ex;
+		}
+		finally
+		{
+			// cleanup pem when not needed anymore!!!!
+			if ( null!=pem )
+			{
+				Arrays.fill(pem, '\u0000');
+			}
 		}
 		
-		// ... and prepare a PEM structure.
-		// Note that the library is flexible about the line length and line separators
-		char[] pem = Base64.encode(user.secret, 64, "\n", header, footer);
-		
-		// And attempt to authenticate
-		boolean authSucc = sshconn.authenticateWithPublicKey(user.username, pem, null);
-		
-		// cleanup pem when not needed anymore!!!!
-		Arrays.fill(pem, '\u0000');
+		// Has an exception been intercepted? Rethrow it
+		if ( null!=exthr )
+		{
+			throw exthr;
+		}
 		
 		return authSucc;
 	}
@@ -326,7 +371,6 @@ public final class SshGanymed extends Ssh2
 			// get output
 			try
 			{
-				// use CliUtil functionality to process the output
 				retVal = processor.process(sess.getStdin(), new StreamGobbler(sess.getStdout()), new StreamGobbler(sess.getStderr()) );
 			}
 			catch ( CliException ex )
