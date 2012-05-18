@@ -1,4 +1,4 @@
-A Java library for local or remote execution of commands.
+A Java framework for local or remote execution of commands.
 
 At the moment the following methods for remote execution are supported:
 - rsh
