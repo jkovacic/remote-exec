@@ -42,7 +42,8 @@ public class LookUpUtil
 		}
 		
 		T retVal = null;
-		 // traverse the whole consts until an element matching valis found
+		
+		// traverse the whole consts until an element matching val is found
 		for ( T element : consts )
 		{
 			O temp = element.getValue();
@@ -60,6 +61,46 @@ public class LookUpUtil
 			}
 		}
 		
+		return retVal;
+	}
+	
+	/**
+	 * Resolve the enum field whose String value matches 'val'. The first occurrence of 'val' 
+	 * will be returned. Comparison of strings is case insensitive.
+	 * 
+	 * @param consts - array of all enum's fields. Get it by calling Enum.values().
+	 * @param val - the value to look up
+	 * 
+	 * @return - the first enum field with the matching value or 'null' if not found
+	 */
+	public static <T extends SearchableByValue<String>> T lookupIgnoreCase(T[] consts, String val)
+	{
+		// sanity check
+		if ( null==consts || null==val )
+		{
+			return null;
+		}
+		
+		T retVal = null;
+		
+		// traverse the whole consts until an element matching val is found
+		for ( T element : consts )
+		{
+			String temp = element.getValue();
+			// if an element equals null, skip to the next one
+			if ( null==temp )
+			{
+				continue;  // for element
+			}
+			
+			// if the element matches val, assign the retVal and do not search further
+			if ( true==temp.equalsIgnoreCase(val) )
+			{
+				retVal = element;
+				break;  // out of for element
+			}
+		}
+				
 		return retVal;
 	}
 }

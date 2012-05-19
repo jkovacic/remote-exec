@@ -46,21 +46,30 @@ abstract class AlgGenericLookupUtil
 	 */
 	public static <T extends ISshMarshalledAlgorithm> T lookupByCUType(T[] consts, IEncryptionAlgorithmFamily cuInst)
 	{
+		// sanity check
+		if ( null==consts || null==cuInst )
+		{
+			return null;
+		}
+		
 		T retVal = null;
 		
 		// traverse all values in consts
-		if ( null!=consts )
+		for ( T type : consts )
 		{
-			for ( T type : consts )
+			if ( null==type )
 			{
-				// compare to their conversions to IEncryptionFamily
-				if ( cuInst==type.toCU() )
-				{
-					retVal = type;
-					break;   // out of for type
-				}
-			} // for type
-		}
+				// skip occurrences of null
+				continue;  // for type
+			}
+			
+			// compare to their conversions to IEncryptionFamily
+			if ( cuInst==type.toCU() )
+			{
+				retVal = type;
+				break;   // out of for type
+			}
+		} // for type
 		
 		return retVal;
 	}
