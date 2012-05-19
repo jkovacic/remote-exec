@@ -17,6 +17,7 @@ limitations under the License.
 package com.jkovacic.ssh2;
 
 import com.jkovacic.cryptoutil.*;
+import com.jkovacic.util.*;
 
 /**
  * Supported asymmetric cryptography (public key) algorithms.
@@ -52,7 +53,7 @@ public enum PKAlgs implements ISshEncryptionAlgorithmFamily, ISshMarshalledAlgor
 	 * @return name of the algorithm as defined by SSH2 hand shaking and key exchange protocols
 	 */
 
-	public String getName()
+	public String getValue()
 	{
 		return this.name;
 	}
@@ -68,7 +69,14 @@ public enum PKAlgs implements ISshEncryptionAlgorithmFamily, ISshMarshalledAlgor
 	{
 		// For purposes of easier maintainability, apply a generic function,
 		// appropriate for all families of encryption algorithms
-		return GenericLookupUtil.lookupByName(PKAlgs.values(), name);
+		PKAlgs retVal = LookUpUtil.lookUp(PKAlgs.values(), name);
+		
+		if ( null==retVal )
+		{
+			throw new SshException("Name not found");
+		}
+		
+		return retVal;
 	}
 	
 	/**
@@ -90,6 +98,6 @@ public enum PKAlgs implements ISshEncryptionAlgorithmFamily, ISshMarshalledAlgor
 	 */
 	public static PKAlgs fromGeneral(AsymmetricAlgorithm cuAlg)
 	{
-		return GenericLookupUtil.lookupByCUType(PKAlgs.values(), cuAlg);
+		return AlgGenericLookupUtil.lookupByCUType(PKAlgs.values(), cuAlg);
 	}
 }

@@ -107,14 +107,14 @@ public class SshSignerHandler
 		switch (alg)
 		{
 		case RSA:
-			pubkeyForm.add(alg.getName());
+			pubkeyForm.add(alg.getValue());
 			pubkeyForm.add(dec.get('e'));
 			pubkeyForm.add(dec.get('n'));
 			retVal = pubkeyForm.format();
 			break;
 			
 		case DSA:
-			pubkeyForm.add(alg.getName());
+			pubkeyForm.add(alg.getValue());
 			pubkeyForm.add(dec.get('p'));
 			pubkeyForm.add(dec.get('q'));
 			pubkeyForm.add(dec.get('g'));
@@ -125,8 +125,8 @@ public class SshSignerHandler
 		case ECDSA_NISTP256:
 		case ECDSA_NISTP384:
 		case ECDSA_NISTP521:
-			pubkeyForm.add(alg.getName());
-			pubkeyForm.add(alg.getName().substring(EC_PREFIX_LEN));
+			pubkeyForm.add(alg.getValue());
+			pubkeyForm.add(alg.getValue().substring(EC_PREFIX_LEN));
 			byte[] pubKey = stripZeros(dec.get('Q'));
 			if ( false == EcUtil.isUncompreesedPoint(pubKey) )
 			{
@@ -281,7 +281,7 @@ public class SshSignerHandler
 			
 			// regardless of the key type, the blob will start with the algorithm name
 			SshFormatter form = new SshFormatter();
-			form.add(PKAlgs.fromGeneral(key.getType()).getName());
+			form.add(PKAlgs.fromGeneral(key.getType()).getValue());
 			
 			switch (key.getType())
 			{

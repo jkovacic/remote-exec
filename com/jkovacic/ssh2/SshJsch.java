@@ -676,7 +676,7 @@ public final class SshJsch extends Ssh2
 		 */
 		public String getAlgName()
 		{
-			return method.getName();
+			return method.getValue();
 		}
 		
 		/*

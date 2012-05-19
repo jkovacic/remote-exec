@@ -16,6 +16,8 @@ limitations under the License.
 
 package com.jkovacic.ssh2;
 
+import com.jkovacic.util.*;
+
 /**
  * Supported key exchange algorithms.
  * 
@@ -47,7 +49,7 @@ public enum KexAlgs implements ISshEncryptionAlgorithmFamily
 	/**
 	 * @return name of the algorithm as defined by SSH2 hand shaking and key exchange protocols
 	 */
-	public String getName()
+	public String getValue()
 	{
 		return this.name;
 	}
@@ -63,7 +65,14 @@ public enum KexAlgs implements ISshEncryptionAlgorithmFamily
 	{
 		// For purposes of easier maintainability, apply a generic function,
 		// appropriate for all families of encryption algorithms
-		return GenericLookupUtil.lookupByName(KexAlgs.values(), name);
+		KexAlgs retVal = LookUpUtil.lookUp(KexAlgs.values(), name);
+		
+		if ( null==retVal )
+		{
+			throw new SshException("Name not found");
+		}
+		
+		return retVal;
 	}
 	
 }

@@ -32,41 +32,8 @@ import com.jkovacic.cryptoutil.*;
 	
 	@author Jernej Kovacic
  */
-abstract class GenericLookupUtil
+abstract class AlgGenericLookupUtil
 {
-	/*
-	 	Case insensitive lookup the algorithm by name and return an appropriate value of Enum
-	 	
-	 	@param algArray - array of all Enum's values, returned by the static method values(). This method is not derived from IEncryptionAlgorithmFamily so it is not possible to call it here
-	 	@param name - string with a name of the algorithm to lookup
-	 	
-	 	@return - instance of the Enum with the appropriate algorithm value
-	 	
-	 	@throws SshException when name could not be resolved
-	 */
-	public static <T extends ISshEncryptionAlgorithmFamily> T lookupByName(T[] algArray, String name) throws SshException
-	{
-		T retVal = null;
-		
-		// traverse all values
-		for ( T alg : algArray )
-		{
-			// case insensitive lookup
-			if ( alg.getName().equalsIgnoreCase(name) )
-			{
-				retVal = alg;
-				break;  // out of for alg
-			}
-		}  // for alg
-		
-		if ( null == retVal )
-		{
-			// name not found
-			throw new SshException("Could not resolve algorithm name '" + name + "'");
-		}
-	
-		return retVal;
-	} // lookupByName
 		
 	/*
 	 * Convert an instance, implementing IEncryptionalgorithmFamily (declared in com.jkovacic.cryptoutil), 

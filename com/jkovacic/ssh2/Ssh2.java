@@ -253,7 +253,7 @@ public abstract class Ssh2
 		// each user selected algorithm...
 		for ( T alg : allowed )
 		{
-			String name = alg.getName();
+			String name = alg.getValue();
 			
 			// is searched among supported ones by its string name (as defined by SSH standards)
 			for ( String av : available )

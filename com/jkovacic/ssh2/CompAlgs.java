@@ -16,6 +16,8 @@ limitations under the License.
 
 package com.jkovacic.ssh2;
 
+import com.jkovacic.util.*;
+
 /**
  * Supported compression algorithms.
  * 
@@ -44,7 +46,7 @@ public enum CompAlgs implements ISshEncryptionAlgorithmFamily
 	/**
 	 * @return name of the algorithm as defined by SSH2 hand shaking and key exchange protocols
 	 */
-	public String getName()
+	public String getValue()
 	{
 		return this.name;
 	}
@@ -60,7 +62,14 @@ public enum CompAlgs implements ISshEncryptionAlgorithmFamily
 	{
 		// For purposes of easier maintainability, apply a generic function,
 		// appropriate for all families of encryption algorithms
-		return GenericLookupUtil.lookupByName(CompAlgs.values(), name);
+		CompAlgs retVal = LookUpUtil.lookUp(CompAlgs.values(), name);
+		
+		if ( null==retVal )
+		{
+			throw new SshException("Name not found");
+		}
+		
+		return retVal;
 	}
 	
 }

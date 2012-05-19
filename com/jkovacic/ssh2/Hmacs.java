@@ -16,8 +16,7 @@ limitations under the License.
 
 package com.jkovacic.ssh2;
 
-import com.jkovacic.cryptoutil.*;
-
+import com.jkovacic.util.*;
 
 /**
  * Supported HMAC (message integrity) algorithms.
@@ -31,29 +30,27 @@ import com.jkovacic.cryptoutil.*;
  * @see ISshEncryptionAlgorithmFamily
  */
 
-public enum Hmacs implements ISshEncryptionAlgorithmFamily, ISshMarshalledAlgorithm
+public enum Hmacs implements ISshEncryptionAlgorithmFamily
 {
-	SHA1("hmac-sha1", DigestAlgorithm.SHA1),
-	MD5("hmac-md5", DigestAlgorithm.MD5),
-	SHA1_96("hmac-sha1-96", null),
-	MD5_96("hmac-md5-96", null),
-	RIPEMD160("hmac-ripemd160", null),
-	RIPEMD160_96("hmac-ripemd160-96", null),
-	NONE("none", null);
+	SHA1("hmac-sha1"),
+	MD5("hmac-md5"),
+	SHA1_96("hmac-sha1-96"),
+	MD5_96("hmac-md5-96"),
+	RIPEMD160("hmac-ripemd160"),
+	RIPEMD160_96("hmac-ripemd160-96"),
+	NONE("none");
 	
 	private String name;
-	private DigestAlgorithm cu = null;
 	
-	Hmacs(String name, DigestAlgorithm generalAlg)
+	Hmacs(String name)
 	{
 		this.name = name;
-		this.cu = generalAlg;
 	}
 	
 	/**
 	 * @return name of the algorithm as defined by SSH2 hand shaking and key exchange protocols
 	 */
-	public String getName()
+	public String getValue()
 	{
 		return this.name;
 	}
@@ -69,28 +66,13 @@ public enum Hmacs implements ISshEncryptionAlgorithmFamily, ISshMarshalledAlgori
 	{
 		// For purposes of easier maintainability, apply a generic function,
 		// appropriate for all families of encryption algorithms
-		return GenericLookupUtil.lookupByName(Hmacs.values(), name);
-	}
-	
-	/**
-	 * Convert into an instance of DigestAlgorithm
-	 * 
-	 * @return instance of DigestAlgorithm if conversion is possible, null if not
-	 */
-	public DigestAlgorithm toCU()
-	{
-		return this.cu;
-	}
-	
-	/**
-	 * Converts an instance of DigestAlgorithm into its "counterpart" of Hmacs
-	 * 
-	 * @param cuAlg - an instance of DigestAlgorithm to be converted
-	 * 
-	 * @return appropriate conversion of cuAlg if possible, null otherwise
-	 */
-	public static Hmacs fromCU(DigestAlgorithm cuAlg)
-	{
-		return GenericLookupUtil.lookupByCUType(Hmacs.values(), cuAlg);
+		Hmacs retVal = LookUpUtil.lookUp(Hmacs.values(), name);
+		
+		if ( null==retVal )
+		{
+			throw new SshException("Name not found");
+		}
+		
+		return retVal;
 	}
 }

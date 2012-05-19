@@ -105,7 +105,7 @@ class HostkeyVerifier
 			// also check equality of algorithms.
 			// If it is not specified skip this check (consider it as passed)
 			if ( null != algorithm &&
-					false == algorithm.equals(key.getMethod().getName()) )
+					false == algorithm.equals(key.getMethod().getValue()) )
 			{
 				// Different public key algorithms ==> not the right key
 				continue keyloop;
