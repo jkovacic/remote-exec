@@ -321,4 +321,111 @@ public class LinearSearch
 		// if sanity check successful, start searching at the last element
 		return ( null==array ? null : rsearch(array, el, array.length-1) );
 	}
+	
+	
+	
+	/*
+	 * 
+	 * S t r i n g [ ]   (case insensitive)
+	 * 
+	 */
+	
+	
+	/**
+	 * Searches the specified array of Strings for the specified value using
+	 * the linear search algorithm. Searching is case insensitive.
+	 * 
+	 * @param array - array to be searched
+	 * @param el - value to be searched for
+	 * @param from - index of the first element (inclusive) to be searched
+	 * 
+	 * @return - position of the first occurrence (after 'from') of 'el' in the array, -1 if not found
+	 */
+	public static int searchIgnoreCase(String[] array, String el, int from)
+	{
+		int retVal = -1;
+		
+		// sanity check
+		if ( null==array || 0==array.length || null==el || from>=array.length || from<0 )
+		{
+			return retVal;
+		}
+		
+		// traverse the array until an occurrence of 'el' is found
+		for ( int i=from; i<array.length; i++ )
+		{
+			if ( el.equalsIgnoreCase(array[i]) )
+			{
+				retVal = i;
+				// no need to traverse further
+				break;  // out of for i
+			}
+		}
+		
+		return retVal;
+	}
+	
+	/**
+	 * Searches the specified array of Strings for the specified value using
+	 * the linear search algorithm. Search is case insensitive.
+	 * 
+	 * @param array - array to be searched
+	 * @param el - value to be searched for
+	 * 
+	 * @return - position of the first occurrence of 'el' in the array, -1 if not found
+	 */
+	public static int searchIgnoreCase(String[] array, String el)
+	{
+		// start searching at the start of the array
+		return searchIgnoreCase(array, el, 0);
+	}
+	
+	/**
+	 * Reverse search of the specified array of Strings for the specified value using
+	 * the linear search algorithm.
+	 * 
+	 * @param array - array to be searched
+	 * @param el - value to be searched for
+	 * @param from - index of the last element (inclusive) to be searched
+	 * 
+	 * @return - position of the last occurrence (before 'from') of 'el' in the array, -1 if not found
+	 */
+	public static int rsearchIgnoreCase(String[] array, String el, int from)
+	{
+		int retVal = -1;
+		
+		// sanity check
+		if ( null==array || 0==array.length || null==el || from>=array.length || from<0 )
+		{
+			return retVal;
+		}
+		
+		// traverse the array in reverse order until an occurrence of 'el' is found
+		for ( int i=from; i>=0; i-- )
+		{
+			if ( el.equalsIgnoreCase(array[i]) )
+			{
+				retVal = i;
+				// no need to traverse further
+				break;  // out of for i
+			}
+		}
+		
+		return retVal;
+	}
+	
+	/**
+	 * Reverse search of the specified array of Strings for the specified value using
+	 * the linear search algorithm. Search is case insensitive.
+	 * 
+	 * @param array - array to be searched
+	 * @param el - value to be searched for
+	 * 
+	 * @return - position of the last occurrence of 'el' in the array, -1 if not found
+	 */
+	public static int rsearchIgnoreCase(String[] array, String el)
+	{
+		// if sanity check successful, start searching at the last element
+		return ( null==array ? null : rsearchIgnoreCase(array, el, array.length-1) );
+	}
 }
