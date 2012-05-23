@@ -155,44 +155,12 @@ public class Signer
 			throw new SignerException("Nothing to sign");
 		}
 		
-		// Prepare a definition for the Signature factory
+		// Prepare a definition for the Signature factory.
+		// e.g. "SHA1withDSA", "SHA384withEC", etc.
 		// Note: crypto provider might not support all combinations,
 		// in that case an exception will be thrown later by a Signature factory.
 		String siginitspec = null;
-		
-		// when specifying a Signature init string, the digest part is slightly different
-		// (without hyphens) than when specifying a digest algorithm itself.
-		switch (hashtype)
-		{
-		case SHA1:
-			siginitspec = "SHA1with" +kc.getType().getName();
-			break;
-			
-		case SHA256:
-			siginitspec = "SHA256with" +kc.getType().getName();
-			break;
-			
-		case SHA384:
-			siginitspec = "SHA384with" + kc.getType().getName();
-			break;
-			
-		case SHA512:
-			siginitspec = "SHA512with" + kc.getType().getName();
-			break;
-			
-		default:
-			throw new SignerException("Unsupported digest agorithm");
-		}
-		
-		
-		// currently a redundant piece of code, might still be useful some day
-		/*
-		// other combinations are currently not supported
-		if ( null==siginitspec )
-		{
-			throw new SignerException("Unsupported combination of signature algorithms");
-		}
-		*/
+		siginitspec = hashtype.getCompact() + "with" + kc.getType().getName();
 		
 		Signature sigctx = null;
 		try

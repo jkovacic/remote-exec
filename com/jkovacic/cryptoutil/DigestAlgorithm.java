@@ -27,22 +27,25 @@ package com.jkovacic.cryptoutil;
  */
 public enum DigestAlgorithm implements IEncryptionAlgorithmFamily
 {
-	MD5("MD5"),
-	SHA1("SHA-1"),
-	SHA256("SHA-256"),
-	SHA384("SHA-384"),
-	SHA512("SHA-512");
+	MD5("MD5", "MD5"),
+	SHA1("SHA-1", "SHA1"),
+	SHA256("SHA-256", "SHA256"),
+	SHA384("SHA-384", "SHA384"),
+	SHA512("SHA-512", "SHA512");
 	
 	private String desc;
+	private String compact;
 	
 	/*
 	 * Constructor 
 	 * 
 	 * @param name of the algorithm
+	 * @param "compact" name (without any hyphens) of the algorithm 
 	 */
-	private DigestAlgorithm(String name)
+	private DigestAlgorithm(String name, String compact)
 	{
 		this.desc = name;
+		this.compact = compact;
 	}
 	
 	/**
@@ -51,5 +54,13 @@ public enum DigestAlgorithm implements IEncryptionAlgorithmFamily
 	public String getName()
 	{
 		return this.desc;
+	}
+	
+	/**
+	 * @return "compact" name of the algorithm, i.e. without any hyphens. This is necessary to instantiate digital signature or HMAC classes
+	 */
+	public String getCompact()
+	{
+		return this.compact;
 	}
 }
