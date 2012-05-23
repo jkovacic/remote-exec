@@ -133,6 +133,7 @@ public class Base64
 	 */
 	public static char[] encode(byte[] blob, int lineSize, String ls, String header, String footer)
 	{
+		// sanity check
 		if ( null == blob || 0 == blob.length )
 		{
 			return null;
@@ -348,27 +349,26 @@ public class Base64
 	}
 	
 	/**
-	 * Decodes a base64 encoded input (an array of chars) into a blob (array of bytes).
-	 * It is possible to decode only a part of the input array (between 'from' and 'to').
+	 * Verifies that the given array of chars represents a valid Base64 encoding
+	 * and returns the length of the original blob (array of bytes). 
+	 * It is possible to verify only a part of the input array (between 'from' and 'to').
 	 * 
-	 *  You are encouraged to call a shorter "version" of decode if you want to decode the whole array
+	 *  You are encouraged to call a shorter "version" of blobLength() if you want to check the whole array
 	 * 
-	 * @param b64 - array of characters to be decoded
-	 * @param from - start decoding at this position of b64
-	 * @param to - finish decoding at this position of b64
+	 * @param b64 - array of characters to be checked for Base64 validity
+	 * @param from - start checking at this position of b64
+	 * @param to - finish checking at this position of b64
 	 * 
-	 * @return decoded input text as an array of bytes
+	 * @return number of of bytes in the decoded blob (non-negative) or -1 if b64 represents an invalid Base64 encoding
 	 */
-	public static byte[] decode(char[] b64, int from, int to)
+	public static int blobLength(char[] b64, int from, int to)
 	{
-		byte[] retVal = null;
-		
-		// check of nput parameters
-		if ( null == b64 )
+		// sanity check
+		if ( null==b64 || from<0 || to<from )
 		{
-			return null;
+			return -1;
 		}
-		
+				
 		byte b64code;
 		int totalLen = 0;		// total length of the input array (without white spaces)
 		boolean valid = true;   // is the input array a valid Base64 string (no "weird" characters except white spaces)
@@ -422,13 +422,57 @@ public class Base64
 		// and no more than two '=' signs are allowed 
 		if ( false==valid || 0!=(totalLen % 4) || eqsigns>2 )
 		{
-			return new byte[0];
+			return -1;
+		}
+		
+		return (totalLen / 4) * 3 - eqsigns;
+	}
+	
+	/**
+	 * Verifies that the given array of chars represents a valid Base64 encoding
+	 * and returns the length of the original blob (array of bytes). 
+	 * 
+	 * @param b64 - array of characters to be checked for Base64 validity
+	 * 
+	 * @return number of of bytes in the decoded blob (non-negative) or -1 if b64 represents an invalid Base64 encoding
+	 */
+	public static int blobLength(char[] b64)
+	{
+		// sanity check
+		if ( null==b64 )
+		{
+			return -1;
+		}
+		
+		return blobLength(b64, 0, b64.length);
+	}
+	
+	/**
+	 * Decodes a base64 encoded input (an array of chars) into a blob (array of bytes).
+	 * It is possible to decode only a part of the input array (between 'from' and 'to').
+	 * 
+	 *  You are encouraged to call a shorter "version" of decode() if you want to decode the whole array
+	 * 
+	 * @param b64 - array of characters to be decoded
+	 * @param from - start decoding at this position of b64
+	 * @param to - finish decoding at this position of b64
+	 * 
+	 * @return decoded input text as an array of bytes
+	 */
+	public static byte[] decode(char[] b64, int from, int to)
+	{
+		// performs the sanity check, Base64 validity test and gets
+		// the number of output bytes
+		int blobLen = blobLength(b64, from, to);
+		if ( blobLen<0 )
+		{
+			return null;
 		}
 		
 		// Now we have a valid array with known length and it is possible to allocate the output buffer
 		// Each group of 4 input characters will be decoded into 3 output bytes.
 		// Each '=' character indicates a "missing" character of a 3-byte output "trio"
-		retVal = new byte[(totalLen / 4) * 3 - eqsigns];
+		byte[] retVal = new byte[blobLen];
 		
 		byte[] buf = new byte[4];  	// a temporary buffer to store a group of 4 input characters 
 		int temp;					// a temporary buffer needed for conversion using bitwise operators
@@ -443,6 +487,7 @@ public class Base64
 		   - fill the buffer
 		   - when filled, decode it into 3 output chars and "append" them to the output buffer
 		*/
+		byte b64code;
 		for ( int i=from; i<to && i<b64.length; i++ )
 		{
 			b64code = base64char(b64[i]);
@@ -500,12 +545,47 @@ public class Base64
 	 */
 	public static byte[] decode(char[] b64)
 	{
+		// sanity check
 		if ( null == b64 )
 		{
 			return null;
 		}
 		
 		return decode(b64, 0, b64.length);
+	}
+	
+	/**
+	 * Checks if the given array of chars represents a valid Base64 encoding. 
+	 * It is possible to verify only a part of the input array (between 'from' and 'to').
+	 * 
+	 *  You are encouraged to call a shorter "version" of validBase64() if you want to check the whole array
+	 * 
+	 * @param b64 - array of characters to be checked for Base64 validity
+	 * @param from - start checking at this position of b64
+	 * @param to - finish checking at this position of b64
+	 * 
+	 * @return true/false
+	 */
+	public static boolean validBase64(char[] b64, int from, int to)
+	{
+		return ( blobLength(b64, from ,to) > 0 );
+	}
+	
+	/**
+	 * Checks if the given array of chars represents a valid Base64 encoding. 
+	 *
+	 * @param b64 - array of characters to be checked for Base64 validity
+	 * 
+	 * @return true/false
+	 */
+	public static boolean validBase64(char[] b64)
+	{
+		if ( null==b64 )
+		{
+			return false; 
+		}
+		
+		return validBase64(b64, 0, b64.length);
 	}
 	
 	/*
