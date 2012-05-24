@@ -67,7 +67,7 @@ public class CliFactory
 		CliSsh retVal = null;
 		Ssh2 ssh = null;	// instance of a class, derived from Ssh2
 		
-		// check of input parameters
+		// sanity check
 		if ( null==host || null==user || null==algs )
 		{
 			throw new CliException("Not all SSH parameters provided");
@@ -115,20 +115,35 @@ public class CliFactory
 	 * A factory method to instantiate a class with SSH exec functionality
 	 * 
 	 * @param sshContext - a class with implemented SSH functionality
+	 * @param managableConnection - whether the connection status can be managed by IExec's calls prepare() and cleanup()
 	 * 
 	 * @return an instance of CliSsh
 	 * 
 	 * @throws CliException if no sshContext is provided
 	 */
-	public static CliSsh getSsh( Ssh2 sshContext ) throws CliException
+	public static CliSsh getSsh(Ssh2 sshContext, boolean managableConnection) throws CliException
 	{
-		// check of input parameters
+		// sanity check
 		if ( null == sshContext )
 		{
 			throw new CliException("No SSH context provided");
 		}
 		
-		return new CliSsh(sshContext);
+		return new CliSsh(sshContext, managableConnection);
+	}
+	
+	/**
+	 * A factory method to instantiate a class with SSH exec functionality
+	 * 
+	 * @param sshContext - a class with implemented SSH functionality
+	 * 
+	 * @return an instance of CliSsh
+	 * 
+	 * @throws CliException if no sshContext is provided
+	 */
+	public static CliSsh getSsh(Ssh2 sshContext) throws CliException
+	{
+		return getSsh(sshContext, true);
 	}
 	
 	/**
@@ -147,7 +162,7 @@ public class CliFactory
 	 */
 	public static CliRexec getRexec(RexecCredentials credentials) throws CliException
 	{
-		// check of input parameters
+		// sanity check
 		if ( null == credentials )
 		{
 			throw new CliException("No credentials provided");
@@ -185,7 +200,7 @@ public class CliFactory
 	 */
 	public static CliRsh getRsh(RshCredentials credentials) throws CliException
 	{
-		// check of input parameters
+		// sanity check
 		if ( null == credentials )
 		{
 			throw new CliException("No credentials provided");

@@ -28,15 +28,34 @@ import com.jkovacic.ssh2.*;
 public final class CliSsh extends CliAb
 {
 	private Ssh2 sshcontext = null;
+	/*
+	 * The application can use the SSH connection for other tasks (e.g. SFTP, port forwarding).
+	 * In this case the connection status can be managed directly via Ssh2 and
+	 * prepare() and cleanup() should be "ignored". 
+	 */
+	private boolean managableConnection = true;
 	
 	/*
 	 * Constructor, sets up the SSH context variable
 	 * 
-	 * @param an instance of a SSH functionality implementing class
+	 * @param sshContext - an instance of a SSH functionality implementing class
+	 * @param canManageConnection - whether prepare() and cleanup() will actually establish/terminate a SSH connection
 	 */
-	CliSsh( Ssh2 sshContext )
+	CliSsh(Ssh2 sshContext, boolean canManageConnection)
 	{
 		this.sshcontext = sshContext;
+		this.managableConnection = canManageConnection;
+	}
+	
+	/*
+	 * Constructor, sets up the SSH context variable
+	 * 
+	 * @param sshContext - an instance of a SSH functionality implementing class
+	 */
+	CliSsh(Ssh2 sshContext)
+	{
+		this.sshcontext = sshContext;
+		this.managableConnection = true;
 	}
 	
 	/**
@@ -51,7 +70,7 @@ public final class CliSsh extends CliAb
 	 */
 	public CliOutput exec(ICliProcessor processor, String command) throws CliException
 	{
-		// check input parameters:
+		// sanity check
 		if ( null==command || 0==command.length() )
 		{
 			throw new CliException("No command to execute");
@@ -84,6 +103,11 @@ public final class CliSsh extends CliAb
 	 */
 	public void prepare() throws CliException
 	{
+		if ( false==managableConnection )
+		{
+			return;
+		}
+		
 		try
 		{
 			if ( null == sshcontext )
@@ -109,6 +133,11 @@ public final class CliSsh extends CliAb
 	 */
 	public void cleanup() throws CliException
 	{
+		if ( false==managableConnection )
+		{
+			return;
+		}
+		
 		try
 		{
 			if ( null != sshcontext )

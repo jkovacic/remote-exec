@@ -32,7 +32,7 @@ package com.jkovacic.cli;
  * 
  * @author Jernej Kovacic
  *
- * @see CliOutput, CliLocal, Ssh2, CliRexec, CliRsh
+ * @see CliOutput, CliLocal, CliSsh, CliRexec, CliRsh
  */
 public interface IExec 
 {
