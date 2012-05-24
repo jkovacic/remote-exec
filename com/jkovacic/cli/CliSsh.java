@@ -43,8 +43,7 @@ public final class CliSsh extends CliAb
 	 */
 	CliSsh(Ssh2 sshContext, boolean canManageConnection)
 	{
-		this.sshcontext = sshContext;
-		this.managableConnection = canManageConnection;
+		setup(sshContext, canManageConnection);
 	}
 	
 	/*
@@ -54,8 +53,19 @@ public final class CliSsh extends CliAb
 	 */
 	CliSsh(Ssh2 sshContext)
 	{
+		setup(sshContext, true);
+	}
+	
+	/*
+	 * Sets up the class's members
+	 * 
+	 * @param sshContext - an instance of a SSH functionality implementing class
+	 * @param canManageConnection - whether prepare() and cleanup() will actually establish/terminate a SSH connection
+	 */
+	private void setup(Ssh2 sshContext, boolean canManageConnection)
+	{
 		this.sshcontext = sshContext;
-		this.managableConnection = true;
+		this.managableConnection = canManageConnection;
 	}
 	
 	/**
