@@ -238,10 +238,13 @@ public class Signer
 	 */
 	enum SignerState
 	{
-		// order of integer values is very important!
-		UNINITIALIZED(0),			// object not initialized yet (i.e. keys not generated yet)
-		KEYS_GENERATED(1),			// keys have been generated
-		SIGNATURE_READY(2);			// signing process is finished, signature is ready to be retrieved
+		// During the signing process, internal states are checked by comparison,
+		// so the states' values must be arranged in ascending order.
+		// Just in case if new states are ever inserted among the existing ones,
+		// there are quite large gaps among the values.
+		UNINITIALIZED(100),			// object not initialized yet (i.e. keys not generated yet)
+		KEYS_GENERATED(200),			// keys have been generated
+		SIGNATURE_READY(300);			// signing process is finished, signature is ready to be retrieved
 		
 		// integer representation of a state, used when checking if the process is in the correct state
 		private int sigstate;
