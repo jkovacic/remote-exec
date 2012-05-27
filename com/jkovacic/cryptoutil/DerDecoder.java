@@ -34,7 +34,7 @@ package com.jkovacic.cryptoutil;
  *
  * @see DerDecoderPrivateKey
  */
-public class DerDecoder 
+public class DerDecoder extends DerAb
 {
 	// contents in DER format
 	private byte[] der = null;
@@ -508,58 +508,5 @@ public class DerDecoder
 		public int seqstart = 0;
 		/** Length of the byte range */
 		public int seqlen = 0;
-	}
-	
-	/**
-	 * An exception used internally within this class.
-	 * It must not be thrown by public methods.
-	 * 
-	 * @author Jernej Kovacic
-	 */
-	protected class DerException extends Exception
-	{
-		static final long serialVersionUID = 76341274L; 
-		DerException(String desc)
-		{
-			super(desc);
-		}
-	}
-
-	/**
-	 * An enumerator with currently supported ASN.1 types and their numeric codes.
-	 * It is possible to easily add more types if necessary.
-	 * 
-	 * @author Jernej Kovacic
-	 */
-	private enum Asn1Types
-	{
-		SEQUENCE(0x30),
-		INTEGER(0x02),
-		BIT_STRING(0x03),
-		OBJECT(0x06),
-		OCTET_STRING(0x04),
-		// EC key specific types:
-		CONTAINER0(0xA0),
-		CONTAINER1(0xA1);
-		
-		private int value;
-		
-		/*
-		 * Constructor. Assigns a numeric value to a field
-		 * 
-		 * @param val - numeric value
-		 */
-		Asn1Types(int val)
-		{
-			this.value = val;
-		}
-		
-		/**
-		 * @return - field's numeric value as defined by the ASN.1 standard
-		 */
-		public int getValue()
-		{
-			return value;
-		}
 	}
 }
