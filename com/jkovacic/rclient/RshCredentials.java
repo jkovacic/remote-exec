@@ -25,7 +25,7 @@ package com.jkovacic.rclient;
 public class RshCredentials extends RCredentials 
 {
 	/** Default rsh port */
-	public static int DEFAULT_RSH_PORT = 514;
+	public static final int DEFAULT_RSH_PORT = 514;
 
 	/*
 	 * Username on thee local host. It is required for successful rsh host based authentication
