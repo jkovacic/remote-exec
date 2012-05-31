@@ -26,7 +26,8 @@ import java.util.*;
  */
 public class HostId 
 {
-	private final int DEFAULT_SSH_PORT = 22;  // default port for SSH connections
+	/** Default SSH port */
+	public static final int DEFAULT_SSH_PORT = 22;
 	
 	/** Host name (may be an IPv4 address, IPv6 address or or a DNS/hosts resolvable name)*/
 	public String hostname;
