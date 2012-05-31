@@ -29,10 +29,10 @@ package com.jkovacic.rclient;
 public abstract class Rsh implements Rclient
 {
 	/** Minimal port number, the client initiates the connection from */
-	public static int MIN_RSH_CLIENT_PORT = 512;
+	public static final int MIN_RSH_CLIENT_PORT = 512;
 	
 	/** Maximum port number, the client initiates the connection from */
-	public static int MAX_RSH_CLIENT_PORT = 1023;
+	public static final int MAX_RSH_CLIENT_PORT = 1023;
 	
 	protected RshCredentials cred;
 	
