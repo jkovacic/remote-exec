@@ -27,7 +27,7 @@ import java.util.*;
 public class RexecCredentials extends RCredentials 
 {
 	/** Default rexec port */
-	public static int DEFAULT_REXEC_PORT = 512;
+	public static final int DEFAULT_REXEC_PORT = 512;
 
 	/*
 	 * Password for authentication on the remote host.
