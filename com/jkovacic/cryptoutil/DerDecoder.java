@@ -376,11 +376,8 @@ public class DerDecoder extends DerAb
 		byte[] retVal = new byte[range.seqlen];
 		
 		// ...and copy the appropriate bytes of der into it
-		for ( int i=0; i<range.seqlen; i++ )
-		{
-			retVal[i] = der[range.seqstart + i];
-		}
-		
+		System.arraycopy(der, range.seqstart, retVal, 0, range.seqlen);
+
 		return retVal;
 	}
 	

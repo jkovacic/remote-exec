@@ -44,7 +44,7 @@ public class ByteHex
 	 */
 	private static char[] convertToHex(byte[] bytes, char[] digits)
 	{
-		// check of input parameters, including length of digits (at least 16 chars.)
+		// sanity check, including length of digits (at least 16 chars.)
 		if ( null==bytes || null==digits || 0==bytes.length || digits.length<16 )
 		{
 			return null;
@@ -207,7 +207,7 @@ public class ByteHex
 	 */
 	public static byte[] toBytes(char[] hex)
 	{
-		// check of input parameters
+		// sanity check
 		if ( null==hex || 0==hex.length || false==validHexString(hex) )
 		{
 			return null;
