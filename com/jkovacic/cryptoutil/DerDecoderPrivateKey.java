@@ -29,7 +29,7 @@ import java.util.*;
  * - instantiate a PrivateKeyDecoder using its constructor and pass it a DER encoded structure
  * - call parse() to start decoding from DER
  * - availability of key parameters may be checked by calling ready()
- * - get individual key parameters by calling get(code). Available code's depend on a key type 
+ * - get individual key parameters by calling get(code). Available codes depend on a key type 
  * 
  * 
  * Format of RSA private keys is explained in RFC 2437:

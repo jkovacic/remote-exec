@@ -146,7 +146,7 @@ public class DerDecoder extends DerAb
 	/*
 	 * Parses various ASN.1 "container" structures (e.g. SEQUENCE), i.e. determines 
 	 * its start and length. This is a convenience common method, called by other
-	 * methods thta parse actual container types.
+	 * methods that parse actual container types.
 	 * 
 	 * Note: it does not read the actual container data and the "cursor"
 	 * is set to the first byte of the actual container data!
@@ -408,7 +408,7 @@ public class DerDecoder extends DerAb
 		}
 		
 		// - ...and must not point out of the DER array.
-		if ( seq.seqstart+seq.seqlen >= der.length )
+		if ( seq.seqstart+seq.seqlen > der.length )
 		{
 			throw new DerException("Out of valid range");
 		}
@@ -422,12 +422,24 @@ public class DerDecoder extends DerAb
 		// Simply convert the range using bit shifting
 		// (an equivalent to multiplication by 256)
 		// Note: in Java, int appears to be Big Endian even on LE architectures (x86, x64)
+		
 		int retVal = 0;
+		
+		if ( der[seq.seqstart] < 0 )
+		{
+			/*
+			 * If MSB of the first byte is set to 1 (i.e. the byte value is negative),
+			 * the int value will be negative as well. In that case assign initial value
+			 * of retVal to -1 (all bits set to 1), so that the negative value will be 
+			 * preserved after bitwise pushing to left and appending of bytes to it.
+			 */
+			retVal = -1;
+		}
 		
 		for ( int i=0; i<seq.seqlen; i++ )
 		{
 			retVal <<= 8;
-			retVal |= (der[(seq.seqstart+i) & 0xff]);
+			retVal |= (der[(seq.seqstart+i)] & 0xff);
 		}
 		
 		
