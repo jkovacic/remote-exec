@@ -158,7 +158,7 @@ public abstract class Ssh2
 	{
 		if ( null == algs )
 		{
-			throw new SshException("Encryption algorithm settings not availble");
+			throw new SshException("Encryption algorithm settings not available");
 		}
 			
 		cipherAlgs = acceptedSupportedAlgs(algs.getCipherAlgorithms(), availableCipherAlgs);
@@ -170,7 +170,7 @@ public abstract class Ssh2
 		
 		if ( null == destination )
 		{
-			throw new SshException("Destination host details not availble");
+			throw new SshException("Destination host details not available");
 		}
 		
 		if ( null == destination.hostkeys )
@@ -221,7 +221,7 @@ public abstract class Ssh2
 		
 		if ( null==compAlgs || 0==compAlgs.length )
 		{
-			throw new SshException("None of availble compression algorithms selected");
+			throw new SshException("None of available compression algorithms selected");
 		}
 
 	}
@@ -281,7 +281,7 @@ public abstract class Ssh2
 	{
 		if ( null == user )
 		{
-			throw new SshException("User settings not availble");
+			throw new SshException("User settings not available");
 		}
 		
 		// username must not be an empty string
@@ -399,7 +399,7 @@ public abstract class Ssh2
 	{
 		if ( null == destination )
 		{
-			throw new SshException("Destination host details not availble");
+			throw new SshException("Destination host details not available");
 		}
 		
 		if ( null==destination.hostname || 0==destination.hostname.length() )
