@@ -35,6 +35,11 @@ public class EcUtil
 	// A numeric code for representation of an ECPoint in uncompressed form
 	private static final byte ECPOINT_UNCOMPRESSED_FORM_INDICATOR = 0x04;
 	
+	// internal static variables for specifications of supported EC types:
+	private static final ECParameterSpec EC_NISTP256;
+	private static final ECParameterSpec EC_NISTP384;
+	private static final ECParameterSpec EC_NISTP521;
+	
 	/**
 	 * Does this library support the given algorithm.
 	 * The function is typically used to filter out non EC algorithms.
@@ -384,102 +389,309 @@ public class EcUtil
 	
 	
 	/*
+	 * A static initialization block that initializes internal variables
+	 * EC_NISTP256, EC_NISTP384 and EC_NISTP521. The block is executed when
+	 * the class is loaded.
+	 * 
 	 * Specifications for all three currently supported EC types:
 	 * nistp256, nistp384 and nistp521. All values are copied from
 	 * SEC 2, Standards for Efficient Cryptography Group,
      * "Recommended Elliptic Curve Domain Parameters"
      * also available at: http://www.secg.org/download/aid-386/sec2_final.pdf
 	 */
-
-	// nistp256 a.k.a. "secp256r1" is defined in the section 2.7.2:
-	private static final ECParameterSpec EC_NISTP256 = new ECParameterSpec(
-		new EllipticCurve(
-			new ECFieldFp(octetStringToInteger(ByteHex.toBytes(
-				("FF:FF:FF:FF:00:00:00:01:00:00:00:00:00:00:00:00:" +
-			     "00:00:00:00:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF").toCharArray() )) ),  // p  (finite field)
-			octetStringToInteger(ByteHex.toBytes(
-				("FF:FF:FF:FF:00:00:00:01:00:00:00:00:00:00:00:00:" +
-				 "00:00:00:00:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FC").toCharArray() )), // a  (parameter of the EC)
-			octetStringToInteger(ByteHex.toBytes(
-				("5A:C6:35:D8:AA:3A:93:E7:B3:EB:BD:55:76:98:86:BC:" +
-				 "65:1D:06:B0:CC:53:B0:F6:3B:CE:3C:3E:27:D2:60:4B").toCharArray() ))  // b  (parameter of the EC)
-		),  // EllipticCurve
-		octetStringToEcPoint(AsymmetricAlgorithm.ECDSA_NISTP256, ByteHex.toBytes(
-			("04:6B:17:D1:F2:E1:2C:42:47:F8:BC:E6:E5:63:A4:40:F2:" +
-			    "77:03:7D:81:2D:EB:33:A0:F4:A1:39:45:D8:98:C2:96:" +
-				"4F:E3:42:E2:FE:1A:7F:9B:8E:E7:EB:4A:7C:0F:9E:16:" + 
-			    "2B:CE:33:57:6B:31:5E:CE:CB:B6:40:68:37:BF:51:F5").toCharArray() )),   // G (base point; uncompressed form)
-		octetStringToInteger(ByteHex.toBytes(
-			("FF:FF:FF:FF:00:00:00:00:FF:FF:FF:FF:FF:FF:FF:FF:" +
-			 "BC:E6:FA:AD:A7:17:9E:84:F3:B9:CA:C2:FC:63:25:51").toCharArray())),  // n   (order)
-		0x01		// h  (cofactor)
-		);  // ECParameterSpec
-		
-	// nistp384 a.k.a. "secp384r1" is defined in the section 2.8.1:
-	private static final ECParameterSpec EC_NISTP384 = new ECParameterSpec(
-		new EllipticCurve(
-			new ECFieldFp(octetStringToInteger(ByteHex.toBytes(
-				("FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-		         "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FE:" + 
-			     "FF:FF:FF:FF:00:00:00:00:00:00:00:00:FF:FF:FF:FF").toCharArray() )) ),  // p  (finite field)
-			octetStringToInteger(ByteHex.toBytes(
-				("FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-		         "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FE:" +
-			     "FF:FF:FF:FF:00:00:00:00:00:00:00:00:FF:FF:FF:FC").toCharArray() )), // a  (parameter of the EC)
-			octetStringToInteger(ByteHex.toBytes(
-				("B3:31:2F:A7:E2:3E:E7:E4:98:8E:05:6B:E3:F8:2D:19:" + 
-			     "18:1D:9C:6E:FE:81:41:12:03:14:08:8F:50:13:87:5A:" +
-			     "C6:56:39:8D:8A:2E:D1:9D:2A:85:C8:ED:D3:EC:2A:EF").toCharArray() ))  // b  (parameter of the EC)
-		),  // EllipticCurve
-	    octetStringToEcPoint(AsymmetricAlgorithm.ECDSA_NISTP384, ByteHex.toBytes(
-		    ("04:AA:87:CA:22:BE:8B:05:37:8E:B1:C7:1E:F3:20:AD:74:" +
-	            "6E:1D:3B:62:8B:A7:9B:98:59:F7:41:E0:82:54:2A:38:" + 
-			    "55:02:F2:5D:BF:55:29:6C:3A:54:5E:38:72:76:0A:B7:" +
-	            "36:17:DE:4A:96:26:2C:6F:5D:9E:98:BF:92:92:DC:29:" + 
-				"F8:F4:1D:BD:28:9A:14:7C:E9:DA:31:13:B5:F0:B8:C0:" +
-                "0A:60:B1:CE:1D:7E:81:9D:7A:43:1D:7C:90:EA:0E:5F").toCharArray() )),  // G (base point; uncompressed form)     
-        octetStringToInteger(ByteHex.toBytes(
-	        ("FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-	 		 "FF:FF:FF:FF:FF:FF:FF:FF:C7:63:4D:81:F4:37:2D:DF:" + 
-			 "58:1A:0D:B2:48:B0:A7:7A:EC:EC:19:6A:CC:C5:29:73").toCharArray())),  // n   (order)
-		0x01		// h  (cofactor)
-		);  // ECParameterSpec
 	
-	// nistp521 a.k.a. "secp521r1" is defined in the section 2.9.1:
-	private static final ECParameterSpec EC_NISTP521 = new ECParameterSpec(
-		new EllipticCurve(
-			new ECFieldFp(octetStringToInteger(ByteHex.toBytes(
-				("01:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" + 
-				       "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-					   "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-				       "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF").toCharArray() )) ),  // p  (finite field)
-			octetStringToInteger(ByteHex.toBytes(
-				("01:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" + 
-				       "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-				       "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-				       "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FC").toCharArray() )), // a  (parameter of the EC)
-			octetStringToInteger(ByteHex.toBytes(
-				("00:51:95:3E:B9:61:8E:1C:9A:1F:92:9A:21:A0:B6:85:40:EE:" +
-				       "A2:DA:72:5B:99:B3:15:F3:B8:B4:89:91:8E:F1:09:E1:" +
-				       "56:19:39:51:EC:7E:93:7B:16:52:C0:BD:3B:B1:BF:07:" +
-				       "35:73:DF:88:3D:2C:34:F1:EF:45:1F:D4:6B:50:3F:00").toCharArray() ))  // b  (parameter of the EC)
-		 ),  // EllipticCurve
-		octetStringToEcPoint(AsymmetricAlgorithm.ECDSA_NISTP521, ByteHex.toBytes(
-			("04:00:C6:85:8E:06:B7:04:04:E9:CD:9E:3E:CB:66:23:95:" + 
-		        "B4:42:9C:64:81:39:05:3F:B5:21:F8:28:AF:60:6B:4D:" +
-			    "3D:BA:A1:4B:5E:77:EF:E7:59:28:FE:1D:C1:27:A2:FF:" +
-			    "A8:DE:33:48:B3:C1:85:6A:42:9B:F9:7E:7E:31:C2:E5:" +
-			    "BD:66:01:18:39:29:6A:78:9A:3B:C0:04:5C:8A:5F:B4:" +
-			    "2C:7D:1B:D9:98:F5:44:49:57:9B:44:68:17:AF:BD:17:" +
-			    "27:3E:66:2C:97:EE:72:99:5E:F4:26:40:C5:50:B9:01:" +
-			    "3F:AD:07:61:35:3C:70:86:A2:72:C2:40:88:BE:94:76:" + 
-			    "9F:D1:66:50").toCharArray() )),  // G (base point; uncompressed form)
-		octetStringToInteger(ByteHex.toBytes(
-			("01:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:" +
-		           "FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FF:FA:" + 
-				   "51:86:87:83:BF:2F:96:6B:7F:CC:01:48:F7:09:A5:D0:" +
-		           "3B:B5:C9:B8:89:9C:47:AE:BB:6F:B7:1E:91:38:64:09").toCharArray())),  // n   (order)
-		0x01		// h  (cofactor)
-		);
+	static
+	{
+		// First define values (byte arrays) for all supported EC types,
+		// such as p, a, b, G, n, h
 		
+		// Common co-factor for all EC specifications:
+		final int COFACTOR = 0x01;
+		
+		/*
+		 * 
+		 * nistp256 a.k.a. "secp256r1" is defined in the section 2.7.2:
+		 * 
+		 */
+		
+		/*
+		 * Finite field (P):
+		 * FFFFFFFF 00000001 00000000 00000000 00000000 FFFFFFFF FFFFFFFF FFFFFFFF
+		 */
+		final byte[] EC_NISTP256_P = {
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01, 
+		    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, 
+		    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF 
+		};
+				
+		/*
+		 * Parameter a of the EC:
+		 * FFFFFFFF 00000001 00000000 00000000 00000000 FFFFFFFF FFFFFFFF FFFFFFFC
+		 */
+		final byte[] EC_NISTP256_A = {
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01, 
+		    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, 
+		    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFC 
+		};
+		
+		/*
+		 * Parameter b of the EC:
+		 * 5AC635D8 AA3A93E7 B3EBBD55 769886BC 651D06B0 CC53B0F6 3BCE3C3E 27D2604B
+		 */
+		final byte[] EC_NISTP256_B = {
+		    (byte) 0x5A, (byte) 0xC6, (byte) 0x35, (byte) 0xD8, (byte) 0xAA, (byte) 0x3A, (byte) 0x93, (byte) 0xE7, 
+		    (byte) 0xB3, (byte) 0xEB, (byte) 0xBD, (byte) 0x55, (byte) 0x76, (byte) 0x98, (byte) 0x86, (byte) 0xBC, 
+		    (byte) 0x65, (byte) 0x1D, (byte) 0x06, (byte) 0xB0, (byte) 0xCC, (byte) 0x53, (byte) 0xB0, (byte) 0xF6, 
+		    (byte) 0x3B, (byte) 0xCE, (byte) 0x3C, (byte) 0x3E, (byte) 0x27, (byte) 0xD2, (byte) 0x60, (byte) 0x4B 
+		};
+		
+		/*
+		 * Base point (G) in uncompressed form:
+		 * 04 6B17D1F2 E12C4247 F8BCE6E5 63A440F2 77037D81 2DEB33A0 F4A13945 D898C296 
+		 *    4FE342E2 FE1A7F9B 8EE7EB4A 7C0F9E16 2BCE3357 6B315ECE CBB64068 37BF51F5
+		 */
+		final byte[] EC_NISTP256_G = {
+		    (byte) 0x04, 
+		    (byte) 0x6B, (byte) 0x17, (byte) 0xD1, (byte) 0xF2, (byte) 0xE1, (byte) 0x2C, (byte) 0x42, (byte) 0x47, 
+	        (byte) 0xF8, (byte) 0xBC, (byte) 0xE6, (byte) 0xE5, (byte) 0x63, (byte) 0xA4, (byte) 0x40, (byte) 0xF2, 
+			(byte) 0x77, (byte) 0x03, (byte) 0x7D, (byte) 0x81, (byte) 0x2D, (byte) 0xEB, (byte) 0x33, (byte) 0xA0, 
+			(byte) 0xF4, (byte) 0xA1, (byte) 0x39, (byte) 0x45, (byte) 0xD8, (byte) 0x98, (byte) 0xC2, (byte) 0x96, 
+			(byte) 0x4F, (byte) 0xE3, (byte) 0x42, (byte) 0xE2, (byte) 0xFE, (byte) 0x1A, (byte) 0x7F, (byte) 0x9B, 
+			(byte) 0x8E, (byte) 0xE7, (byte) 0xEB, (byte) 0x4A, (byte) 0x7C, (byte) 0x0F, (byte) 0x9E, (byte) 0x16, 
+			(byte) 0x2B, (byte) 0xCE, (byte) 0x33, (byte) 0x57, (byte) 0x6B, (byte) 0x31, (byte) 0x5E, (byte) 0xCE, 
+			(byte) 0xCB, (byte) 0xB6, (byte) 0x40, (byte) 0x68, (byte) 0x37, (byte) 0xBF, (byte) 0x51, (byte) 0xF5 
+		};
+		
+		/*
+		 * Order of G (N):
+		 * FFFFFFFF 00000000 FFFFFFFF FFFFFFFF BCE6FAAD A7179E84 F3B9CAC2 FC632551
+		 */
+		final byte[] EC_NISTP256_N = {
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xBC, (byte) 0xE6, (byte) 0xFA, (byte) 0xAD, (byte) 0xA7, (byte) 0x17, (byte) 0x9E, (byte) 0x84, 
+		    (byte) 0xF3, (byte) 0xB9, (byte) 0xCA, (byte) 0xC2, (byte) 0xFC, (byte) 0x63, (byte) 0x25, (byte) 0x51 
+		};
+		
+		/*
+		 * 
+		 * nistp384 a.k.a. "secp384r1" is defined in the section 2.8.1:
+		 * 
+		 */
+		
+		/*
+		 * Finite field (P):
+		 * FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 
+		 * FFFFFFFF FFFFFFFE FFFFFFFF 00000000 00000000 FFFFFFFF
+		 */
+		final byte[] EC_NISTP384_P = {
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, 
+		    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+		};
+		
+		/*
+		 * Parameter a of the EC:
+		 * FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 
+		 * FFFFFFFF FFFFFFFE FFFFFFFF 00000000 00000000 FFFFFFFC
+		 */
+		final byte[] EC_NISTP384_A = {
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, 
+		    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFC
+		};
+		
+		/*
+		 * Parameter b of the EC:
+		 * B3312FA7 E23EE7E4 988E056B E3F82D19 181D9C6E FE814112 
+		 * 0314088F 5013875A C656398D 8A2ED19D 2A85C8ED D3EC2AEF
+		 */
+		final byte[] EC_NISTP384_B = {
+		    (byte) 0xB3, (byte) 0x31, (byte) 0x2F, (byte) 0xA7, (byte) 0xE2, (byte) 0x3E, (byte) 0xE7, (byte) 0xE4, 
+		    (byte) 0x98, (byte) 0x8E, (byte) 0x05, (byte) 0x6B, (byte) 0xE3, (byte) 0xF8, (byte) 0x2D, (byte) 0x19, 
+		    (byte) 0x18, (byte) 0x1D, (byte) 0x9C, (byte) 0x6E, (byte) 0xFE, (byte) 0x81, (byte) 0x41, (byte) 0x12, 
+		    (byte) 0x03, (byte) 0x14, (byte) 0x08, (byte) 0x8F, (byte) 0x50, (byte) 0x13, (byte) 0x87, (byte) 0x5A, 
+		    (byte) 0xC6, (byte) 0x56, (byte) 0x39, (byte) 0x8D, (byte) 0x8A, (byte) 0x2E, (byte) 0xD1, (byte) 0x9D, 
+		    (byte) 0x2A, (byte) 0x85, (byte) 0xC8, (byte) 0xED, (byte) 0xD3, (byte) 0xEC, (byte) 0x2A, (byte) 0xEF
+		};
+		
+		/*
+		 * Base point (G) in uncompressed form:
+		 * 04 AA87CA22 BE8B0537 8EB1C71E F320AD74 6E1D3B62 8BA79B98 59F741E0 82542A38 
+		 *    5502F25D BF55296C 3A545E38 72760AB7 3617DE4A 96262C6F 5D9E98BF 9292DC29
+		 *    F8F41DBD 289A147C E9DA3113 B5F0B8C0 0A60B1CE 1D7E819D 7A431D7C 90EA0E5F
+		 */
+		final byte[] EC_NISTP384_G = {
+		    (byte) 0x04, 
+		    (byte) 0xAA, (byte) 0x87, (byte) 0xCA, (byte) 0x22, (byte) 0xBE, (byte) 0x8B, (byte) 0x05, (byte) 0x37, 
+		    (byte) 0x8E, (byte) 0xB1, (byte) 0xC7, (byte) 0x1E, (byte) 0xF3, (byte) 0x20, (byte) 0xAD, (byte) 0x74, 
+		    (byte) 0x6E, (byte) 0x1D, (byte) 0x3B, (byte) 0x62, (byte) 0x8B, (byte) 0xA7, (byte) 0x9B, (byte) 0x98, 
+		    (byte) 0x59, (byte) 0xF7, (byte) 0x41, (byte) 0xE0, (byte) 0x82, (byte) 0x54, (byte) 0x2A, (byte) 0x38, 
+		    (byte) 0x55, (byte) 0x02, (byte) 0xF2, (byte) 0x5D, (byte) 0xBF, (byte) 0x55, (byte) 0x29, (byte) 0x6C, 
+		    (byte) 0x3A, (byte) 0x54, (byte) 0x5E, (byte) 0x38, (byte) 0x72, (byte) 0x76, (byte) 0x0A, (byte) 0xB7, 
+		    (byte) 0x36, (byte) 0x17, (byte) 0xDE, (byte) 0x4A, (byte) 0x96, (byte) 0x26, (byte) 0x2C, (byte) 0x6F, 
+		    (byte) 0x5D, (byte) 0x9E, (byte) 0x98, (byte) 0xBF, (byte) 0x92, (byte) 0x92, (byte) 0xDC, (byte) 0x29, 
+		    (byte) 0xF8, (byte) 0xF4, (byte) 0x1D, (byte) 0xBD, (byte) 0x28, (byte) 0x9A, (byte) 0x14, (byte) 0x7C, 
+		    (byte) 0xE9, (byte) 0xDA, (byte) 0x31, (byte) 0x13, (byte) 0xB5, (byte) 0xF0, (byte) 0xB8, (byte) 0xC0, 
+		    (byte) 0x0A, (byte) 0x60, (byte) 0xB1, (byte) 0xCE, (byte) 0x1D, (byte) 0x7E, (byte) 0x81, (byte) 0x9D, 
+		    (byte) 0x7A, (byte) 0x43, (byte) 0x1D, (byte) 0x7C, (byte) 0x90, (byte) 0xEA, (byte) 0x0E, (byte) 0x5F
+		};	
+		
+		/*
+		 * Order of G (N):
+		 * FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
+		 * C7634D81 F4372DDF 581A0DB2 48B0A77A ECEC196A CCC52973
+		 */
+		final byte[] EC_NISTP384_N = {
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xC7, (byte) 0x63, (byte) 0x4D, (byte) 0x81, (byte) 0xF4, (byte) 0x37, (byte) 0x2D, (byte) 0xDF, 
+		    (byte) 0x58, (byte) 0x1A, (byte) 0x0D, (byte) 0xB2, (byte) 0x48, (byte) 0xB0, (byte) 0xA7, (byte) 0x7A, 
+		    (byte) 0xEC, (byte) 0xEC, (byte) 0x19, (byte) 0x6A, (byte) 0xCC, (byte) 0xC5, (byte) 0x29, (byte) 0x73 
+		};
+		
+		/*
+		 * 
+		 * nistp521 a.k.a. "secp521r1" is defined in the section 2.9.1:
+		 * 
+		 */
+		
+		/*
+		 * Finite field (P):
+		 * 01FF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 
+		 *      FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
+		 */
+		final byte[] EC_NISTP521_P = {
+			(byte) 0x01, (byte) 0xFF,
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF 
+		};
+				
+		/*
+		 * Parameter a of the EC:
+		 * 01FF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 
+		 *      FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFC
+		 */
+		final byte[] EC_NISTP521_A = {
+			(byte) 0x01, (byte) 0xFF,
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFC 
+		};
+		
+		/*
+		 * Parameter b of the EC:
+		 * 0051 953EB961 8E1C9A1F 929A21A0 B68540EE A2DA725B 99B315F3 B8B48991 8EF109E1 
+		 *      56193951 EC7E937B 1652C0BD 3BB1BF07 3573DF88 3D2C34F1 EF451FD4 6B503F00
+		 */
+		final byte[] EC_NISTP521_B = {
+			(byte) 0x00, (byte) 0x51,
+		    (byte) 0x95, (byte) 0x3E, (byte) 0xB9, (byte) 0x61, (byte) 0x8E, (byte) 0x1C, (byte) 0x9A, (byte) 0x1F, 
+		    (byte) 0x92, (byte) 0x9A, (byte) 0x21, (byte) 0xA0, (byte) 0xB6, (byte) 0x85, (byte) 0x40, (byte) 0xEE, 
+		    (byte) 0xA2, (byte) 0xDA, (byte) 0x72, (byte) 0x5B, (byte) 0x99, (byte) 0xB3, (byte) 0x15, (byte) 0xF3, 
+		    (byte) 0xB8, (byte) 0xB4, (byte) 0x89, (byte) 0x91, (byte) 0x8E, (byte) 0xF1, (byte) 0x09, (byte) 0xE1, 
+		    (byte) 0x56, (byte) 0x19, (byte) 0x39, (byte) 0x51, (byte) 0xEC, (byte) 0x7E, (byte) 0x93, (byte) 0x7B, 
+		    (byte) 0x16, (byte) 0x52, (byte) 0xC0, (byte) 0xBD, (byte) 0x3B, (byte) 0xB1, (byte) 0xBF, (byte) 0x07, 
+		    (byte) 0x35, (byte) 0x73, (byte) 0xDF, (byte) 0x88, (byte) 0x3D, (byte) 0x2C, (byte) 0x34, (byte) 0xF1, 
+		    (byte) 0xEF, (byte) 0x45, (byte) 0x1F, (byte) 0xD4, (byte) 0x6B, (byte) 0x50, (byte) 0x3F, (byte) 0x00
+		};
+		
+		/*
+		 * Base point (G) in uncompressed form:
+		 * 04 00C6858E 06B70404 E9CD9E3E CB662395 B4429C64 8139053F B521F828 AF606B4D 
+		 *    3DBAA14B 5E77EFE7 5928FE1D C127A2FF A8DE3348 B3C1856A 429BF97E 7E31C2E5 
+		 *    BD660118 39296A78 9A3BC004 5C8A5FB4 2C7D1BD9 98F54449 579B4468 17AFBD17 
+		 *    273E662C 97EE7299 5EF42640 C550B901 3FAD0761 353C7086 A272C240 88BE9476 
+		 *    9FD16650
+		 */
+		final byte[] EC_NISTP521_G = {
+		    (byte) 0x04, 
+		    (byte) 0x00, (byte) 0xC6, (byte) 0x85, (byte) 0x8E, (byte) 0x06, (byte) 0xB7, (byte) 0x04, (byte) 0x04, 
+		    (byte) 0xE9, (byte) 0xCD, (byte) 0x9E, (byte) 0x3E, (byte) 0xCB, (byte) 0x66, (byte) 0x23, (byte) 0x95, 
+		    (byte) 0xB4, (byte) 0x42, (byte) 0x9C, (byte) 0x64, (byte) 0x81, (byte) 0x39, (byte) 0x05, (byte) 0x3F, 
+		    (byte) 0xB5, (byte) 0x21, (byte) 0xF8, (byte) 0x28, (byte) 0xAF, (byte) 0x60, (byte) 0x6B, (byte) 0x4D, 
+		    (byte) 0x3D, (byte) 0xBA, (byte) 0xA1, (byte) 0x4B, (byte) 0x5E, (byte) 0x77, (byte) 0xEF, (byte) 0xE7, 
+		    (byte) 0x59, (byte) 0x28, (byte) 0xFE, (byte) 0x1D, (byte) 0xC1, (byte) 0x27, (byte) 0xA2, (byte) 0xFF, 
+		    (byte) 0xA8, (byte) 0xDE, (byte) 0x33, (byte) 0x48, (byte) 0xB3, (byte) 0xC1, (byte) 0x85, (byte) 0x6A, 
+		    (byte) 0x42, (byte) 0x9B, (byte) 0xF9, (byte) 0x7E, (byte) 0x7E, (byte) 0x31, (byte) 0xC2, (byte) 0xE5, 
+		    (byte) 0xBD, (byte) 0x66, (byte) 0x01, (byte) 0x18, (byte) 0x39, (byte) 0x29, (byte) 0x6A, (byte) 0x78, 
+		    (byte) 0x9A, (byte) 0x3B, (byte) 0xC0, (byte) 0x04, (byte) 0x5C, (byte) 0x8A, (byte) 0x5F, (byte) 0xB4, 
+		    (byte) 0x2C, (byte) 0x7D, (byte) 0x1B, (byte) 0xD9, (byte) 0x98, (byte) 0xF5, (byte) 0x44, (byte) 0x49, 
+		    (byte) 0x57, (byte) 0x9B, (byte) 0x44, (byte) 0x68, (byte) 0x17, (byte) 0xAF, (byte) 0xBD, (byte) 0x17, 
+		    (byte) 0x27, (byte) 0x3E, (byte) 0x66, (byte) 0x2C, (byte) 0x97, (byte) 0xEE, (byte) 0x72, (byte) 0x99, 
+		    (byte) 0x5E, (byte) 0xF4, (byte) 0x26, (byte) 0x40, (byte) 0xC5, (byte) 0x50, (byte) 0xB9, (byte) 0x01, 
+		    (byte) 0x3F, (byte) 0xAD, (byte) 0x07, (byte) 0x61, (byte) 0x35, (byte) 0x3C, (byte) 0x70, (byte) 0x86, 
+		    (byte) 0xA2, (byte) 0x72, (byte) 0xC2, (byte) 0x40, (byte) 0x88, (byte) 0xBE, (byte) 0x94, (byte) 0x76, 
+		    (byte) 0x9F, (byte) 0xD1, (byte) 0x66, (byte) 0x50
+		};
+		
+		/*
+		 * Order of G (N):
+		 * 01FF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFA
+		 *      51868783 BF2F966B 7FCC0148 F709A5D0 3BB5C9B8 899C47AE BB6FB71E 91386409
+		 */
+		final byte[] EC_NISTP521_N = {
+			(byte) 0x01, (byte) 0xFF,
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 
+		    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFA, 
+		    (byte) 0x51, (byte) 0x86, (byte) 0x87, (byte) 0x83, (byte) 0xBF, (byte) 0x2F, (byte) 0x96, (byte) 0x6B, 
+		    (byte) 0x7F, (byte) 0xCC, (byte) 0x01, (byte) 0x48, (byte) 0xF7, (byte) 0x09, (byte) 0xA5, (byte) 0xD0, 
+		    (byte) 0x3B, (byte) 0xB5, (byte) 0xC9, (byte) 0xB8, (byte) 0x89, (byte) 0x9C, (byte) 0x47, (byte) 0xAE, 
+		    (byte) 0xBB, (byte) 0x6F, (byte) 0xB7, (byte) 0x1E, (byte) 0x91, (byte) 0x38, (byte) 0x64, (byte) 0x09
+		};
+			
+		// When numeric values have been defined, create specifications of all supported EC types:
+			
+		// NISTP256:
+		EC_NISTP256 = new ECParameterSpec(
+			new EllipticCurve(
+				new ECFieldFp(octetStringToInteger(EC_NISTP256_P) ),
+				octetStringToInteger(EC_NISTP256_A),
+				octetStringToInteger(EC_NISTP256_B)  ),
+			octetStringToEcPoint(AsymmetricAlgorithm.ECDSA_NISTP256, EC_NISTP256_G),
+			octetStringToInteger(EC_NISTP256_N),
+			COFACTOR );
+			
+		// NISTP384:
+		EC_NISTP384 = new ECParameterSpec(
+			new EllipticCurve(
+				new ECFieldFp(octetStringToInteger(EC_NISTP384_P) ),
+				octetStringToInteger(EC_NISTP384_A),
+				octetStringToInteger(EC_NISTP384_B) ),
+		    octetStringToEcPoint(AsymmetricAlgorithm.ECDSA_NISTP384, EC_NISTP384_G),     
+	        octetStringToInteger(EC_NISTP384_N),
+			COFACTOR );
+		
+		// NISTP521:
+		EC_NISTP521 = new ECParameterSpec(
+			new EllipticCurve(
+				new ECFieldFp(octetStringToInteger(EC_NISTP521_P) ),
+				octetStringToInteger(EC_NISTP521_A),
+				octetStringToInteger(EC_NISTP521_B) ),
+			octetStringToEcPoint(AsymmetricAlgorithm.ECDSA_NISTP521, EC_NISTP521_G),
+			octetStringToInteger(EC_NISTP521_N),
+			COFACTOR	);
+	}		
 }
